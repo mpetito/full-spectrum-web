@@ -11,6 +11,7 @@ import {
 } from './mesh';
 import { applyCyclic, applyGradient, buildGradientLayerMap } from './palette';
 import { encodeBoundaryFaces } from './subdivision';
+import { encodeBoundaryFacesParallel } from './subdivision-pool';
 import { read3mf, write3mf, type ThreeMFData } from './threemf';
 
 export interface PipelineResult {
@@ -239,6 +240,152 @@ export function process(
       progressCallback: boundaryProgress,
       layerFilamentMap,
     });
+
+    for (const [faceIdx, hexStr] of boundaryHex) {
+      faceHex[faceIdx] = hexStr;
+    }
+    boundaryFaceCount = boundaryHex.size;
+  }
+
+  const boundaryFacePct = nFaces > 0 ? (boundaryFaceCount / nFaces) * 100.0 : 0.0;
+
+  // Step 7: Write output
+  let outputBytes: Uint8Array | undefined;
+  if (!dryRun) {
+    outputBytes = write3mf(
+      data3mf.vertices,
+      data3mf.faces,
+      data3mf.vertexCount,
+      data3mf.faceCount,
+      faceHex,
+      defaultFilament,
+      config.targetFormat,
+    );
+  }
+
+  const result: PipelineResult = {
+    success: true,
+    faceCount: nFaces,
+    layerCount: totalLayerCount,
+    filamentDistribution: distribution,
+    warnings,
+    boundaryFaceCount,
+    boundaryFacePct,
+  };
+
+  return [result, outputBytes];
+}
+
+/**
+ * Async variant of {@link process} that uses Web Workers for bisection encoding.
+ *
+ * Identical to `process()` except the bisection step calls
+ * `encodeBoundaryFacesParallel` for parallel execution.
+ */
+export async function processAsync(
+  inputData: ArrayBuffer,
+  config: FullSpectrumConfig,
+  options?: ProcessOptions,
+): Promise<[PipelineResult, Uint8Array | undefined]> {
+  const flatten = options?.flatten ?? false;
+  const dryRun = options?.dryRun ?? false;
+  const progressCallback = options?.progressCallback;
+  const warnings: string[] = [];
+
+  // Step 1: Load 3MF
+  const data3mf: ThreeMFData = read3mf(inputData, flatten);
+  const nFaces = data3mf.faceCount;
+  const defaultFilament = data3mf.defaultFilament;
+
+  const mesh: MeshData = {
+    vertices: data3mf.vertices,
+    faces: data3mf.faces,
+    vertexCount: data3mf.vertexCount,
+    faceCount: data3mf.faceCount,
+  };
+
+  // Step 2: Cluster faces by input filament
+  const clusters = clusterFacesByFilament(data3mf.faceColors, nFaces, defaultFilament);
+
+  // Step 3: Apply palette to each cluster
+  const faceFilaments = new Uint32Array(nFaces);
+  faceFilaments.fill(defaultFilament);
+  let totalLayerCount = 0;
+
+  for (const [inputFil, faceIndices] of clusters) {
+    const mapping = findMapping(config, inputFil);
+    let palette: Palette;
+
+    if (!mapping) {
+      palette = defaultCyclicPalette();
+      warnings.push(
+        `No mapping for input filament ${inputFil}; using default cyclic [1, 2]`,
+      );
+    } else {
+      palette = mapping.outputPalette;
+    }
+
+    const [layerIndices, regionLayers] = computeRegionLayers(
+      mesh,
+      config.layerHeightMm,
+      faceIndices,
+    );
+    totalLayerCount = Math.max(totalLayerCount, regionLayers);
+
+    let assigned: Uint8Array;
+    if (palette.type === 'cyclic') {
+      assigned = applyCyclic(layerIndices, palette.pattern);
+    } else if (palette.type === 'gradient') {
+      const stops = palette.stops.map((s) => [s.t, s.filament] as [number, number]);
+      assigned = applyGradient(layerIndices, regionLayers, stops);
+    } else {
+      warnings.push(`Unknown palette type for filament ${inputFil}; skipping`);
+      continue;
+    }
+
+    for (let k = 0; k < faceIndices.length; k++) {
+      faceFilaments[faceIndices[k]] = assigned[k];
+    }
+  }
+
+  // Step 4: Compute distribution
+  const distribution = new Map<number, number>();
+  for (let i = 0; i < nFaces; i++) {
+    const f = faceFilaments[i];
+    distribution.set(f, (distribution.get(f) ?? 0) + 1);
+  }
+
+  // Step 5: Convert to hex strings
+  const faceHex: string[] = new Array(nFaces);
+  for (let i = 0; i < nFaces; i++) {
+    const fil = faceFilaments[i];
+    faceHex[i] = fil === defaultFilament ? '' : filamentToHex(fil);
+  }
+
+  // Step 6: Bisection encoding for boundary faces (parallel)
+  let boundaryFaceCount = 0;
+  if (config.boundarySplit && config.boundaryStrategy === 'bisection') {
+    const boundaryProgress = progressCallback
+      ? (done: number, total: number) => progressCallback('bisection', done, total)
+      : undefined;
+
+    const layerFilamentMap = buildLayerFilamentMap(
+      mesh,
+      config,
+      clusters,
+      defaultFilament,
+    );
+
+    const boundaryHex = await encodeBoundaryFacesParallel(
+      mesh,
+      faceFilaments,
+      config.layerHeightMm,
+      {
+        maxDepth: config.maxSplitDepth,
+        progressCallback: boundaryProgress,
+        layerFilamentMap,
+      },
+    );
 
     for (const [faceIdx, hexStr] of boundaryHex) {
       faceHex[faceIdx] = hexStr;
