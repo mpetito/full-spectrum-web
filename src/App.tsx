@@ -3,6 +3,9 @@ import { FileUpload } from './components/FileUpload';
 import { MeshViewer } from './components/MeshViewer';
 import { FilamentList } from './components/FilamentList';
 import { ProcessingStatus } from './components/ProcessingStatus';
+import { GlobalSettings } from './components/GlobalSettings';
+import { PaletteMapper } from './components/PaletteMapper';
+import { ConfigImportExport } from './components/ConfigImportExport';
 
 export default function App() {
   return (
@@ -13,6 +16,9 @@ export default function App() {
           <h1 className="text-xl font-bold">Full Spectrum</h1>
           <FileUpload />
           <FilamentList />
+          <GlobalSettings />
+          <PaletteMapper />
+          <ConfigImportExport />
           <ProcessingStatus />
         </aside>
         {/* Right panel — 3D preview */}
