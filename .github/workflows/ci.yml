@@ -24,7 +24,7 @@ jobs:
       - name: Lint
         run: npx eslint .
       - name: Unit & component tests
-        run: npx vitest run --coverage
+        run: npm run test -- --coverage
 
   e2e:
     needs: quality
