@@ -1,24 +1,85 @@
-import { useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Center, Bounds } from '@react-three/drei';
-import * as THREE from 'three';
-import { useAppState } from '../state/AppContext';
-import { FILAMENT_COLORS } from '../constants';
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Center, Bounds } from "@react-three/drei";
+import * as THREE from "three";
+import { useAppState } from "../state/AppContext";
+import { FILAMENT_COLORS } from "../constants";
+import type { LayerColorData } from "../lib/pipeline";
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) / 255, ((n >> 8) & 0xff) / 255, (n & 0xff) / 255];
 }
 
-function MeshGeometry() {
-  const { meshData, processedMeshData } = useAppState();
-  const displayData = processedMeshData ?? meshData;
-  if (!displayData) return null;
+/** Build a 1D DataTexture mapping layer index → RGB from layer color data. */
+function buildLayerTexture(layerColorData: LayerColorData): THREE.DataTexture {
+  const { layerFilamentMap, totalLayers } = layerColorData;
+  const width = Math.max(totalLayers, 1);
+  const data = new Uint8Array(width * 4); // RGBA
 
-  const { vertices, faces, faceColors, defaultFilament, faceCount } = displayData;
+  for (let i = 0; i < width; i++) {
+    const filament = layerFilamentMap.get(i) ?? 0;
+    const hex = FILAMENT_COLORS[filament] ?? FILAMENT_COLORS[0];
+    const [r, g, b] = hexToRgb(hex);
+    data[i * 4] = Math.round(r * 255);
+    data[i * 4 + 1] = Math.round(g * 255);
+    data[i * 4 + 2] = Math.round(b * 255);
+    data[i * 4 + 3] = 255;
+  }
+
+  const tex = new THREE.DataTexture(data, width, 1, THREE.RGBAFormat);
+  tex.minFilter = THREE.NearestFilter;
+  tex.magFilter = THREE.NearestFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+const LAYER_VERTEX_SHADER = /* glsl */ `
+  varying float vModelZ;
+  varying vec3 vWorldNormal;
+
+  void main() {
+    vModelZ = position.z;
+    vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const LAYER_FRAGMENT_SHADER = /* glsl */ `
+  uniform float uZMin;
+  uniform float uLayerHeight;
+  uniform float uTotalLayers;
+  uniform sampler2D uLayerColorTex;
+
+  varying float vModelZ;
+  varying vec3 vWorldNormal;
+
+  void main() {
+    float epsilon = uLayerHeight * 0.001;
+    float layerF = floor((vModelZ - uZMin + epsilon) / uLayerHeight);
+    layerF = clamp(layerF, 0.0, uTotalLayers - 1.0);
+
+    // Sample 1D texture: center of texel
+    float u = (layerF + 0.5) / uTotalLayers;
+    vec3 layerColor = texture2D(uLayerColorTex, vec2(u, 0.5)).rgb;
+
+    // Basic lighting: ambient (0.5) + directional diffuse (1.0)
+    vec3 normal = normalize(vWorldNormal);
+    vec3 lightDir = normalize(vec3(5.0, 10.0, 7.0));
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 color = layerColor * (0.5 + diff);
+
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
+function MeshGeometry() {
+  const { meshData, layerColorData } = useAppState();
 
   const geometry = useMemo(() => {
-    // Unindexed geometry: 3 vertices per face for flat shading + per-face colors
+    if (!meshData) return null;
+    const { vertices, faces, faceColors, defaultFilament, faceCount } = meshData;
+
     const posArr = new Float32Array(faceCount * 9);
     const colArr = new Float32Array(faceCount * 9);
 
@@ -27,7 +88,6 @@ function MeshGeometry() {
       const i1 = faces[f * 3 + 1];
       const i2 = faces[f * 3 + 2];
 
-      // Position
       posArr[f * 9] = vertices[i0 * 3];
       posArr[f * 9 + 1] = vertices[i0 * 3 + 1];
       posArr[f * 9 + 2] = vertices[i0 * 3 + 2];
@@ -40,10 +100,8 @@ function MeshGeometry() {
       posArr[f * 9 + 7] = vertices[i2 * 3 + 1];
       posArr[f * 9 + 8] = vertices[i2 * 3 + 2];
 
-      // Color: look up filament → hex → RGB
       const filament = faceColors.get(f) ?? defaultFilament;
-      const hex =
-        FILAMENT_COLORS[filament] ?? FILAMENT_COLORS[0];
+      const hex = FILAMENT_COLORS[filament] ?? FILAMENT_COLORS[0];
       const [r, g, b] = hexToRgb(hex);
 
       colArr[f * 9] = r;
@@ -58,11 +116,51 @@ function MeshGeometry() {
     }
 
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+    geo.setAttribute("position", new THREE.BufferAttribute(posArr, 3));
+    geo.setAttribute("color", new THREE.BufferAttribute(colArr, 3));
     geo.computeVertexNormals();
     return geo;
-  }, [vertices, faces, faceColors, defaultFilament, faceCount]);
+  }, [meshData]);
+
+  const shaderMaterial = useMemo(() => {
+    if (
+      !layerColorData ||
+      layerColorData.totalLayers <= 0 ||
+      !isFinite(layerColorData.zMin)
+    ) {
+      return null;
+    }
+
+    const tex = buildLayerTexture(layerColorData);
+
+    return new THREE.ShaderMaterial({
+      vertexShader: LAYER_VERTEX_SHADER,
+      fragmentShader: LAYER_FRAGMENT_SHADER,
+      uniforms: {
+        uZMin: { value: layerColorData.zMin },
+        uLayerHeight: { value: layerColorData.layerHeight },
+        uTotalLayers: { value: layerColorData.totalLayers },
+        uLayerColorTex: { value: tex },
+      },
+    });
+  }, [layerColorData]);
+
+  // Dispose previous shader material + texture when replaced
+  const prevMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
+  useEffect(() => {
+    const prev = prevMaterialRef.current;
+    if (prev && prev !== shaderMaterial) {
+      prev.uniforms.uLayerColorTex.value.dispose();
+      prev.dispose();
+    }
+    prevMaterialRef.current = shaderMaterial;
+  }, [shaderMaterial]);
+
+  if (!geometry) return null;
+
+  if (shaderMaterial) {
+    return <mesh geometry={geometry} material={shaderMaterial} />;
+  }
 
   return (
     <mesh geometry={geometry}>
@@ -91,7 +189,10 @@ export function MeshViewer() {
       <directionalLight position={[5, 10, 7]} intensity={1} />
       <Bounds fit clip observe>
         <Center>
-          <MeshGeometry />
+          {/* 3MF uses Z-up; Three.js uses Y-up. Rotate -90° around X to stand models upright. */}
+          <group rotation={[-Math.PI / 2, 0, 0]}>
+            <MeshGeometry />
+          </group>
         </Center>
       </Bounds>
       <OrbitControls makeDefault />

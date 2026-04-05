@@ -4,12 +4,12 @@ import {
   useReducer,
   type ReactNode,
   type Dispatch,
-} from 'react';
-import type { ThreeMFData } from '../lib/threemf';
-import type { FullSpectrumConfig } from '../lib/config';
-import type { PipelineResult } from '../lib/pipeline';
+} from "react";
+import type { ThreeMFData } from "../lib/threemf";
+import type { FullSpectrumConfig } from "../lib/config";
+import type { PipelineResult, LayerColorData } from "../lib/pipeline";
 export type { ThreeMFData };
-import { defaultConfig } from '../lib/config';
+import { defaultConfig } from "../lib/config";
 
 // ── State shape ─────────────────────────────────────────────────────────────
 
@@ -19,8 +19,8 @@ export interface AppState {
   config: FullSpectrumConfig;
   processedHex: string[] | null;
   result: PipelineResult | null;
-  processedMeshData: ThreeMFData | null;
-  status: 'idle' | 'loading' | 'processing' | 'ready' | 'error';
+  layerColorData: LayerColorData | null;
+  status: "idle" | "loading" | "processing" | "ready" | "error";
   error: string | null;
   outputBytes: Uint8Array | null;
 }
@@ -28,19 +28,19 @@ export interface AppState {
 // ── Actions ─────────────────────────────────────────────────────────────────
 
 export type AppAction =
-  | { type: 'UPLOAD_START' }
-  | { type: 'UPLOAD_SUCCESS'; meshData: ThreeMFData; rawFileData: ArrayBuffer }
-  | { type: 'UPLOAD_ERROR'; error: string }
-  | { type: 'UPDATE_CONFIG'; config: FullSpectrumConfig }
-  | { type: 'PROCESS_START' }
+  | { type: "UPLOAD_START" }
+  | { type: "UPLOAD_SUCCESS"; meshData: ThreeMFData; rawFileData: ArrayBuffer }
+  | { type: "UPLOAD_ERROR"; error: string }
+  | { type: "UPDATE_CONFIG"; config: FullSpectrumConfig }
+  | { type: "PROCESS_START" }
   | {
-      type: 'PROCESS_SUCCESS';
+      type: "PROCESS_SUCCESS";
       result: PipelineResult;
       outputBytes: Uint8Array;
-      processedMeshData: ThreeMFData;
+      layerColorData: LayerColorData;
     }
-  | { type: 'PROCESS_ERROR'; error: string }
-  | { type: 'RESET' };
+  | { type: "PROCESS_ERROR"; error: string }
+  | { type: "RESET" };
 
 // ── Initial state ───────────────────────────────────────────────────────────
 
@@ -50,56 +50,58 @@ const initialState: AppState = {
   config: defaultConfig(0.1),
   processedHex: null,
   result: null,
-  processedMeshData: null,
-  status: 'idle',
+  layerColorData: null,
+  status: "idle",
   error: null,
   outputBytes: null,
 };
 
 // ── Reducer ─────────────────────────────────────────────────────────────────
 
-function appReducer(state: AppState, action: AppAction): AppState {
-  switch (action.type) {
-    case 'UPLOAD_START':
-      return { ...state, status: 'loading', error: null };
+export { initialState };
 
-    case 'UPLOAD_SUCCESS':
+export function appReducer(state: AppState, action: AppAction): AppState {
+  switch (action.type) {
+    case "UPLOAD_START":
+      return { ...state, status: "loading", error: null };
+
+    case "UPLOAD_SUCCESS":
       return {
         ...state,
-        status: 'ready',
+        status: "ready",
         meshData: action.meshData,
         rawFileData: action.rawFileData,
         error: null,
         // Clear previous processing results
         processedHex: null,
         result: null,
-        processedMeshData: null,
+        layerColorData: null,
         outputBytes: null,
       };
 
-    case 'UPLOAD_ERROR':
-      return { ...state, status: 'error', error: action.error };
+    case "UPLOAD_ERROR":
+      return { ...state, status: "error", error: action.error };
 
-    case 'UPDATE_CONFIG':
+    case "UPDATE_CONFIG":
       return { ...state, config: action.config };
 
-    case 'PROCESS_START':
-      return { ...state, status: 'processing', error: null };
+    case "PROCESS_START":
+      return { ...state, status: "processing", error: null };
 
-    case 'PROCESS_SUCCESS':
+    case "PROCESS_SUCCESS":
       return {
         ...state,
-        status: 'ready',
+        status: "ready",
         result: action.result,
         outputBytes: action.outputBytes,
-        processedMeshData: action.processedMeshData,
+        layerColorData: action.layerColorData,
         error: null,
       };
 
-    case 'PROCESS_ERROR':
-      return { ...state, status: 'error', error: action.error };
+    case "PROCESS_ERROR":
+      return { ...state, status: "error", error: action.error };
 
-    case 'RESET':
+    case "RESET":
       return initialState;
 
     default:
@@ -129,12 +131,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 export function useAppState(): AppState {
   const ctx = useContext(StateContext);
-  if (!ctx) throw new Error('useAppState must be used within AppProvider');
+  if (!ctx) throw new Error("useAppState must be used within AppProvider");
   return ctx;
 }
 
 export function useAppDispatch(): Dispatch<AppAction> {
   const ctx = useContext(DispatchContext);
-  if (!ctx) throw new Error('useAppDispatch must be used within AppProvider');
+  if (!ctx) throw new Error("useAppDispatch must be used within AppProvider");
   return ctx;
 }
