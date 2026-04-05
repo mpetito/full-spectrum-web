@@ -1,5 +1,3 @@
-import { FILAMENT_COLORS } from '../constants';
-import { MAX_FILAMENTS } from '../lib/encoding';
 import type { ColorMapping, Palette, FullSpectrumConfig } from '../lib/config';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { CyclicEditor } from './CyclicEditor';
@@ -19,7 +17,7 @@ function defaultPalette(type: 'cyclic' | 'gradient'): Palette {
 }
 
 export function PaletteMapper() {
-  const { config } = useAppState();
+  const { config, filamentColors } = useAppState();
   const dispatch = useAppDispatch();
 
   const mappings: ColorMapping[] = [...config.colorMappings];
@@ -53,9 +51,10 @@ export function PaletteMapper() {
 
   const addMapping = () => {
     const used = new Set(mappings.map((m) => m.inputFilament));
+    const maxFil = filamentColors.length - 1;
     let next = 1;
-    while (used.has(next) && next <= MAX_FILAMENTS) next++;
-    if (next > MAX_FILAMENTS) return;
+    while (used.has(next) && next <= maxFil) next++;
+    if (next > maxFil) return;
     dispatchMappings([...mappings, { inputFilament: next, outputPalette: defaultPalette('cyclic') }]);
   };
 
@@ -83,7 +82,7 @@ export function PaletteMapper() {
               <div className="flex items-center gap-2">
                 <span
                   className="w-4 h-4 rounded-full inline-block border border-gray-300 dark:border-gray-600"
-                  style={{ backgroundColor: FILAMENT_COLORS[mapping.inputFilament] ?? '#808080' }}
+                  style={{ backgroundColor: filamentColors[mapping.inputFilament] ?? '#808080' }}
                 />
                 <label className="text-sm font-medium flex items-center gap-1">
                   Input
@@ -92,7 +91,7 @@ export function PaletteMapper() {
                     onChange={(e) => setInputFilament(i, Number(e.target.value))}
                     className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1 py-0.5 text-xs ml-1"
                   >
-                    {Array.from({ length: MAX_FILAMENTS }, (_, n) => n + 1).map((n) => (
+                    {Array.from({ length: filamentColors.length - 1 }, (_, n) => n + 1).map((n) => (
                       <option key={n} value={n}>
                         {n}
                       </option>
@@ -136,7 +135,7 @@ export function PaletteMapper() {
         ))}
       </div>
 
-      {mappings.length < MAX_FILAMENTS && (
+      {mappings.length < filamentColors.length - 1 && (
         <button
           onClick={addMapping}
           className="mt-2 w-full rounded border border-dashed border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-500 hover:text-indigo-600 hover:border-indigo-400"

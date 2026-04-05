@@ -1,6 +1,6 @@
 /** Filament hex encode/decode for 3MF per-triangle attributes. */
 
-export const MAX_FILAMENTS = 10;
+export const MAX_FILAMENTS = 31;
 
 /**
  * Maximum bisection tree depth for both encoding and decoding.
@@ -11,6 +11,10 @@ export const MAX_BISECTION_DEPTH = 20;
 export const FILAMENT_HEX_TABLE: Record<number, string> = {
     1: '4', 2: '8', 3: '0C', 4: '1C', 5: '2C',
     6: '3C', 7: '4C', 8: '5C', 9: '6C', 10: '7C',
+    11: '8C', 12: '9C', 13: 'AC', 14: 'BC', 15: 'CC', 16: 'DC', 17: 'EC',
+    18: '0FC', 19: '1FC', 20: '2FC', 21: '3FC', 22: '4FC', 23: '5FC',
+    24: '6FC', 25: '7FC', 26: '8FC', 27: '9FC', 28: 'AFC', 29: 'BFC',
+    30: 'CFC', 31: 'DFC',
 };
 
 export const HEX_FILAMENT_TABLE: Record<string, number> = Object.fromEntries(
@@ -19,26 +23,24 @@ export const HEX_FILAMENT_TABLE: Record<string, number> = Object.fromEntries(
 
 export function hexToFilament(hexStr: string): number {
     const normalized = hexStr.trim().toUpperCase();
-    if (normalized.length > 2) {
+    const filament = HEX_FILAMENT_TABLE[normalized];
+    if (filament !== undefined) return filament;
+    if (normalized.length > 3) {
         throw new Error(`Sub-painted triangle detected: '${hexStr}'`);
     }
-    const filament = HEX_FILAMENT_TABLE[normalized];
-    if (filament === undefined) {
-        throw new Error(`Invalid filament hex code: '${hexStr}'`);
-    }
-    return filament;
+    throw new Error(`Invalid filament hex code: '${hexStr}'`);
 }
 
 export function filamentToHex(filament: number): string {
     const hexStr = FILAMENT_HEX_TABLE[filament];
     if (hexStr === undefined) {
-        throw new Error(`Filament index ${filament} out of range (must be 1–10)`);
+        throw new Error(`Filament index ${filament} out of range (must be 1–31)`);
     }
     return hexStr;
 }
 
 export function isSubPainted(hexStr: string): boolean {
-    return hexStr.trim().length > 2;
+    return hexStr.trim().length > 3;
 }
 
 // Bisection tree data structures

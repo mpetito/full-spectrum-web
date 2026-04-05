@@ -11,6 +11,7 @@ import { DownloadButton } from './components/DownloadButton';
 import { OutputStats } from './components/OutputStats';
 import { useProcessing } from './hooks/useProcessing';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PreviewToggle } from './components/PreviewToggle';
 
 function AppContent() {
   useProcessing();
@@ -35,6 +36,11 @@ function AppContent() {
         <ErrorBoundary>
           <MeshViewer />
         </ErrorBoundary>
+
+        {/* Preview mode toggle — top-left */}
+        <div className="absolute top-4 left-4 z-10">
+          <PreviewToggle />
+        </div>
 
         {/* Output panel overlay — top-right */}
         <div className="absolute top-4 right-4 z-10 w-64">

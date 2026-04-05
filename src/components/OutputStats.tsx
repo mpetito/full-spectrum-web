@@ -1,8 +1,7 @@
 import { useAppState } from '../state/AppContext';
-import { FILAMENT_COLORS } from '../constants';
 
 export function OutputStats() {
-  const { result } = useAppState();
+  const { result, filamentColors } = useAppState();
 
   if (!result) return null;
 
@@ -36,7 +35,7 @@ export function OutputStats() {
               <span className="flex items-center gap-1">
                 <span
                   className="inline-block w-2 h-2 rounded-full"
-                  style={{ backgroundColor: FILAMENT_COLORS[fil] ?? '#999' }}
+                  style={{ backgroundColor: filamentColors[fil] ?? '#999' }}
                 />
                 Filament {fil}
               </span>
