@@ -266,15 +266,15 @@ export function MeshViewer() {
     >
       <ambientLight intensity={0.5} />
       <directionalLight position={[5, 10, 7]} intensity={1} />
-      <Bounds fit clip observe>
-        <Center>
-          {/* 3MF uses Z-up; Three.js uses Y-up. Rotate -90° around X to stand models upright. */}
-          <group rotation={[-Math.PI / 2, 0, 0]}>
+      <Center>
+        {/* 3MF uses Z-up; Three.js uses Y-up. Rotate -90° around X to stand models upright. */}
+        <group rotation={[-Math.PI / 2, 0, 0]}>
+          <Bounds fit clip observe>
             <MeshGeometry />
-            <BuildPlateGrid />
-          </group>
-        </Center>
-      </Bounds>
+          </Bounds>
+          <BuildPlateGrid />
+        </group>
+      </Center>
       <SceneInvalidator filamentColors={filamentColors} />
     </Canvas>
   );

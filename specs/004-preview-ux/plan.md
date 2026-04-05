@@ -19,7 +19,7 @@
    ```
 2. `HEX_FILAMENT_TABLE` is auto-generated from `FILAMENT_HEX_TABLE` entries — no separate change needed; verify it populates correctly.
 3. Update `MAX_FILAMENTS` from `10` to `31`.
-4. Update `filamentToHex()` error message to reflect new valid range (0–31).
+4. Verify `filamentToHex()` error message reflects valid range (1–31); no change needed since 0 is the reserved/unassigned slot.
 5. Add unit tests for encoding/decoding filaments 11–31 (round-trip: `filamentToHex(n)` → `hexToFilament(hex)` === `n`).
 
 ### Files Changed
@@ -51,7 +51,7 @@
 
 1. In `src/components/FilamentColorEditor.tsx`:
    - Add a "+" button at the end of the color grid that appends `#808080` to the filament colors array.
-   - Add a "−" button on each swatch to remove that color slot — disabled when `filamentColors.length <= 2`.
+   - Add a "−" button on the last swatch (only) to remove the last color slot — preserves filament index stability. Disabled when `filamentColors.length <= 2`.
    - Cap additions at 32 total colors (`filamentColors.length < 32`).
    - On add/remove, dispatch `SET_FILAMENT_COLORS` with the modified array.
 2. In `src/components/PaletteMapper.tsx`:

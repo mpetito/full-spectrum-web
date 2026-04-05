@@ -96,6 +96,11 @@ export function PaletteMapper() {
                         {n}
                       </option>
                     ))}
+                    {mapping.inputFilament >= filamentColors.length && (
+                      <option value={mapping.inputFilament}>
+                        {mapping.inputFilament} (removed)
+                      </option>
+                    )}
                   </select>
                 </label>
               </div>

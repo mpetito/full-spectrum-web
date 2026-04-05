@@ -18,8 +18,8 @@ test.describe('Upload flow', () => {
             timeout: 10000,
         });
 
-        // Face/vertex stats should appear in the upload area
-        await expect(page.getByText(/\d+ faces · \d+ vertices/)).toBeVisible();
+        // Face stats should appear in the upload area
+        await expect(page.getByText(/\d+ faces · click to replace/)).toBeVisible();
     });
 
     test('upload valid 3MF shows 3D canvas', async ({ page }) => {

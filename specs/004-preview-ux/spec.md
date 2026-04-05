@@ -30,7 +30,7 @@ wireframe mode, print bed size configuration.
 - Grid spacing: 10mm lines
 - Plane sized to model bounding box (max X/Y dimension × 1.5, minimum 100mm)
 - Neutral gray color, semi-transparent so it doesn't dominate — works in both light/dark themes
-- Positioned at Z=0 in model space (before the -π/2 rotation group)
+- Positioned just below the model's minimum Z (inside the -π/2 rotation group)
 - Must not z-fight with model base
 
 ### 2. Double-Click to Reset
@@ -50,7 +50,7 @@ wireframe mode, print bed size configuration.
 - Remove hardcoded 11-color limit from `FILAMENT_COLORS` usage
 - Add "+" button at end of the color grid in `FilamentColorEditor` to append a new color
 - New colors default to `#808080`
-- Add "−" button on each swatch to remove it (minimum 2 colors: slot 0 + at least one active)
+- Add "−" button on the last swatch to remove it (preserves filament index stability; minimum 2 colors: slot 0 + at least one active)
 - Maximum 32 colors (matching BambuStudio's `CONST_FILAMENTS` table which supports indices 0–31)
 - Extend `FILAMENT_HEX_TABLE` / `HEX_FILAMENT_TABLE` in `encoding.ts` to cover filaments 11–31
   using BambuStudio's encoding:

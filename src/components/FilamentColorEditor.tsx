@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { FILAMENT_COLORS } from '../constants';
+import { MAX_FILAMENTS } from '../lib/encoding';
 
-const MAX_FILAMENT_SLOTS = 32;
+const MAX_FILAMENT_SLOTS = MAX_FILAMENTS + 1;
 
 export function FilamentColorEditor() {
   const { filamentColors } = useAppState();
@@ -48,11 +49,11 @@ export function FilamentColorEditor() {
             <label className="cursor-pointer">
               <span
                 className="w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 overflow-hidden relative block"
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: color || '#808080' }}
               >
                 <input
                   type="color"
-                  value={color}
+                  value={color || '#808080'}
                   onChange={(e) => handleColorChange(i, e.target.value)}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                   aria-label={`Filament ${i} color`}
