@@ -11,7 +11,10 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 /** Build a 1D DataTexture mapping layer index → RGB from layer color data. */
-function buildLayerTexture(layerColorData: LayerColorData, filamentColors: readonly string[]): THREE.DataTexture {
+function buildLayerTexture(
+  layerColorData: LayerColorData,
+  filamentColors: readonly string[],
+): THREE.DataTexture {
   const { layerFilamentMap, totalLayers } = layerColorData;
   const width = Math.max(totalLayers, 1);
   const data = new Uint8Array(width * 4); // RGBA
@@ -74,7 +77,8 @@ const LAYER_FRAGMENT_SHADER = /* glsl */ `
 `;
 
 function MeshGeometry() {
-  const { meshData, layerColorData, filamentColors } = useAppState();
+  const { meshData, layerColorData, filamentColors, previewMode } = useAppState();
+  const { invalidate } = useThree();
 
   const geometry = useMemo(() => {
     if (!meshData) return null;
@@ -102,7 +106,10 @@ function MeshGeometry() {
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(posArr, 3));
-    geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(faceCount * 9), 3));
+    geo.setAttribute(
+      "color",
+      new THREE.BufferAttribute(new Float32Array(faceCount * 9), 3),
+    );
     geo.computeVertexNormals();
     return geo;
   }, [meshData]);
@@ -125,7 +132,13 @@ function MeshGeometry() {
     }
 
     colorAttr.needsUpdate = true;
-  }, [geometry, meshData, filamentColors]);
+    invalidate();
+  }, [geometry, meshData, filamentColors, invalidate]);
+
+  // Invalidate on preview mode switch without re-running O(faceCount) color fill
+  useEffect(() => {
+    invalidate();
+  }, [previewMode, invalidate]);
 
   const shaderMaterial = useMemo(() => {
     if (
@@ -174,7 +187,7 @@ function MeshGeometry() {
 
   if (!geometry) return null;
 
-  if (shaderMaterial) {
+  if (previewMode === 'output' && shaderMaterial) {
     return <mesh geometry={geometry} material={shaderMaterial} />;
   }
 
@@ -185,10 +198,55 @@ function MeshGeometry() {
   );
 }
 
+/** Renders a 10mm-grid build plate sized to the model bounding box, positioned just below the model's minimum Z. */
+function BuildPlateGrid() {
+  const { meshData } = useAppState();
+  const { invalidate } = useThree();
+
+  const gridHelper = useMemo(() => {
+    if (!meshData) return null;
+    const { vertices } = meshData;
+    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity, zMin = Infinity;
+    for (let i = 0; i < vertices.length; i += 3) {
+      const x = vertices[i], y = vertices[i + 1], z = vertices[i + 2];
+      if (x < xMin) xMin = x;
+      if (x > xMax) xMax = x;
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+      if (z < zMin) zMin = z;
+    }
+    const span = Math.max(xMax - xMin, yMax - yMin, 100) * 1.5;
+    const divisions = Math.max(1, Math.ceil(span / 10));
+    const size = divisions * 10;
+    const grid = new THREE.GridHelper(size, divisions, 0x888888, 0x444444);
+    // GridHelper is XZ plane — rotate to XY to align with model's Z-up coordinate space
+    grid.rotation.x = Math.PI / 2;
+    grid.position.set((xMin + xMax) / 2, (yMin + yMax) / 2, zMin - 0.01);
+    return grid;
+  }, [meshData]);
+
+  useEffect(() => {
+    invalidate();
+
+    return () => {
+      if (!gridHelper) return;
+      gridHelper.geometry.dispose();
+      if (Array.isArray(gridHelper.material)) {
+        gridHelper.material.forEach((m) => m.dispose());
+      } else {
+        gridHelper.material.dispose();
+      }
+    };
+  }, [gridHelper, invalidate]);
+
+  if (!gridHelper) return null;
+  return <primitive object={gridHelper} />;
+}
+
 /** Triggers a single re-render whenever scene inputs change (demand-driven rendering). */
 function SceneInvalidator({ filamentColors }: { filamentColors?: string[] }) {
   const { invalidate } = useThree();
-  const { meshData, layerColorData } = useAppState();
+  const { meshData, layerColorData, previewMode } = useAppState();
 
   useEffect(() => {
     invalidate();
@@ -196,7 +254,7 @@ function SceneInvalidator({ filamentColors }: { filamentColors?: string[] }) {
 
   useEffect(() => {
     invalidate();
-  }, [filamentColors, invalidate]);
+  }, [filamentColors, previewMode, invalidate]);
 
   return <OrbitControls makeDefault onChange={() => invalidate()} />;
 }
@@ -220,14 +278,15 @@ export function MeshViewer() {
     >
       <ambientLight intensity={0.5} />
       <directionalLight position={[5, 10, 7]} intensity={1} />
-      <Bounds fit clip observe>
-        <Center>
-          {/* 3MF uses Z-up; Three.js uses Y-up. Rotate -90° around X to stand models upright. */}
-          <group rotation={[-Math.PI / 2, 0, 0]}>
+      <Center>
+        {/* 3MF uses Z-up; Three.js uses Y-up. Rotate -90° around X to stand models upright. */}
+        <group rotation={[-Math.PI / 2, 0, 0]}>
+          <Bounds fit clip observe>
             <MeshGeometry />
-          </group>
-        </Center>
-      </Bounds>
+          </Bounds>
+          <BuildPlateGrid />
+        </group>
+      </Center>
       <SceneInvalidator filamentColors={filamentColors} />
     </Canvas>
   );

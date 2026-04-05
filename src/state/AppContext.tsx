@@ -28,6 +28,7 @@ export interface AppState {
   inputFilename: string | null;
   filamentColors: string[];
   progress: { stage: string; done: number; total: number } | null;
+  previewMode: 'input' | 'output';
 }
 
 // ── Actions ─────────────────────────────────────────────────────────────────
@@ -48,7 +49,8 @@ export type AppAction =
   | { type: "RESET" }
   | { type: "SET_INPUT_FILENAME"; filename: string }
   | { type: "SET_FILAMENT_COLORS"; colors: string[] }
-  | { type: "SET_PROGRESS"; progress: { stage: string; done: number; total: number } | null };
+  | { type: "SET_PROGRESS"; progress: { stage: string; done: number; total: number } | null }
+  | { type: "SET_PREVIEW_MODE"; mode: "input" | "output" };
 
 // ── Initial state ───────────────────────────────────────────────────────────
 
@@ -65,6 +67,7 @@ const initialState: AppState = {
   inputFilename: null,
   filamentColors: [...FILAMENT_COLORS],
   progress: null,
+  previewMode: 'output',
 };
 
 // ── Reducer ─────────────────────────────────────────────────────────────────
@@ -74,7 +77,7 @@ export { initialState };
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "UPLOAD_START":
-      return { ...state, status: "loading", error: null };
+      return { ...state, status: "loading", error: null, previewMode: 'input' as const };
 
     case "UPLOAD_SUCCESS":
       return {
@@ -89,6 +92,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         layerColorData: null,
         outputBytes: null,
         inputFilename: null,
+        previewMode: 'input' as const,
       };
 
     case "UPLOAD_ERROR":
@@ -109,6 +113,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         layerColorData: action.layerColorData,
         error: null,
         progress: null,
+        previewMode: 'output' as const,
       };
 
     case "PROCESS_ERROR":
@@ -125,6 +130,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case "SET_PROGRESS":
       return { ...state, progress: action.progress };
+
+    case "SET_PREVIEW_MODE":
+      return { ...state, previewMode: action.mode };
 
     default:
       return state;

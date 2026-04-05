@@ -235,3 +235,45 @@ describe('appReducer – new state fields', () => {
         expect(next.progress).toBeNull();
     });
 });
+
+describe('appReducer – previewMode', () => {
+    it('initial previewMode is output', () => {
+        expect(initialState.previewMode).toBe('output');
+    });
+
+    it('UPLOAD_START sets previewMode to input', () => {
+        const prev: AppState = { ...initialState, previewMode: 'output' };
+        const next = appReducer(prev, { type: 'UPLOAD_START' });
+        expect(next.previewMode).toBe('input');
+    });
+
+    it('UPLOAD_SUCCESS sets previewMode to input', () => {
+        const next = appReducer(
+            { ...initialState, status: 'loading', previewMode: 'output' },
+            { type: 'UPLOAD_SUCCESS', meshData: mockMeshData, rawFileData: new ArrayBuffer(10) },
+        );
+        expect(next.previewMode).toBe('input');
+    });
+
+    it('PROCESS_SUCCESS sets previewMode to output', () => {
+        const next = appReducer(
+            { ...initialState, status: 'processing', previewMode: 'input' },
+            { type: 'PROCESS_SUCCESS', result: mockResult, outputBytes: new Uint8Array([1]), layerColorData: mockLayerColorData },
+        );
+        expect(next.previewMode).toBe('output');
+    });
+
+    it('SET_PREVIEW_MODE sets previewMode', () => {
+        const next = appReducer(
+            { ...initialState, previewMode: 'output' },
+            { type: 'SET_PREVIEW_MODE', mode: 'input' },
+        );
+        expect(next.previewMode).toBe('input');
+    });
+
+    it('RESET restores initial previewMode', () => {
+        const modified: AppState = { ...initialState, previewMode: 'input' };
+        const next = appReducer(modified, { type: 'RESET' });
+        expect(next.previewMode).toBe(initialState.previewMode);
+    });
+});

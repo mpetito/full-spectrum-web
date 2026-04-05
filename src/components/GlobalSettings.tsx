@@ -1,5 +1,5 @@
 import { useAppState, useAppDispatch } from '../state/AppContext';
-import type { FullSpectrumConfig } from '../lib/config';
+import { defaultConfig, type FullSpectrumConfig } from '../lib/config';
 
 export function GlobalSettings() {
   const { config } = useAppState();
@@ -9,6 +9,8 @@ export function GlobalSettings() {
     dispatch({ type: 'UPDATE_CONFIG', config: { ...config, ...patch } });
   };
 
+  const defaults = defaultConfig(0.1);
+
   return (
     <section>
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
@@ -16,7 +18,7 @@ export function GlobalSettings() {
       </h2>
       <div className="flex flex-col gap-3">
         {/* Layer height */}
-        <label htmlFor="layer-height" className="flex flex-col gap-1">
+        <label htmlFor="layer-height" className="flex flex-col gap-1" onDoubleClick={() => update({ layerHeightMm: defaults.layerHeightMm })} title="Double-click to reset">
           <span className="text-xs text-gray-600 dark:text-gray-400">
             Layer height: {config.layerHeightMm.toFixed(2)} mm
           </span>
@@ -33,7 +35,7 @@ export function GlobalSettings() {
         </label>
 
         {/* Target format */}
-        <label htmlFor="target-format" className="flex flex-col gap-1">
+        <label htmlFor="target-format" className="flex flex-col gap-1" onDoubleClick={() => update({ targetFormat: defaults.targetFormat })} title="Double-click to reset">
           <span className="text-xs text-gray-600 dark:text-gray-400">Target format</span>
           <select
             id="target-format"
@@ -48,7 +50,7 @@ export function GlobalSettings() {
         </label>
 
         {/* Boundary split */}
-        <label htmlFor="boundary-split" className="flex items-center gap-2 text-sm">
+        <label htmlFor="boundary-split" className="flex items-center gap-2 text-sm" onDoubleClick={() => update({ boundarySplit: defaults.boundarySplit })} title="Double-click to reset">
           <input
             id="boundary-split"
             type="checkbox"
@@ -61,7 +63,7 @@ export function GlobalSettings() {
 
         {/* Max split depth */}
         {config.boundarySplit && (
-          <label htmlFor="max-split-depth" className="flex flex-col gap-1">
+          <label htmlFor="max-split-depth" className="flex flex-col gap-1" onDoubleClick={() => update({ maxSplitDepth: defaults.maxSplitDepth })} title="Double-click to reset">
             <span className="text-xs text-gray-600 dark:text-gray-400">
               Max split depth: {config.maxSplitDepth}
             </span>

@@ -33,17 +33,21 @@ describe('hexToFilament', () => {
     expect(() => hexToFilament('0C1C2C')).toThrow('Sub-painted');
   });
 
+  it('rejects 3-char bisection tree encoding as sub-painted', () => {
+    expect(() => hexToFilament('481')).toThrow('Sub-painted');
+  });
+
   it('rejects unknown code', () => {
     expect(() => hexToFilament('FF')).toThrow('Invalid filament hex code');
   });
 });
 
 describe('filamentToHex', () => {
-  it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])('round-trips filament %d', (f) => {
+  it.each(Array.from({ length: 31 }, (_, i) => i + 1))('round-trips filament %d', (f) => {
     expect(hexToFilament(filamentToHex(f))).toBe(f);
   });
 
-  it.each([0, 11, -1, 100])('rejects out-of-range %d', (f) => {
+  it.each([0, 32, -1, 100])('rejects out-of-range %d', (f) => {
     expect(() => filamentToHex(f)).toThrow('out of range');
   });
 });
@@ -53,6 +57,9 @@ describe('isSubPainted', () => {
     ['4', false],
     ['8', false],
     ['0C', false],
+    ['0FC', false],
+    ['DFC', false],
+    ['481', true],
     ['0C1C', true],
     ['0C1C2C', true],
   ] as [string, boolean][])('isSubPainted(%s) → %s', (hex, expected) => {

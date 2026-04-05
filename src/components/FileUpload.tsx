@@ -77,6 +77,8 @@ export function FileUpload() {
 
   const isLoading = status === 'loading';
 
+  const hasFile = !!fileName && !!meshData;
+
   return (
     <div
       role="button"
@@ -85,7 +87,9 @@ export function FileUpload() {
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onClick={() => inputRef.current?.click()}
-      className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 cursor-pointer transition-colors ${
+      className={`flex items-center justify-center rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+        hasFile ? 'gap-2 p-2' : 'flex-col gap-2 p-6'
+      } ${
         dragOver
           ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
           : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
@@ -101,32 +105,35 @@ export function FileUpload() {
         onChange={onInputChange}
       />
 
-      {/* Upload cloud icon */}
-      <svg
-        className="w-10 h-10 text-gray-400 dark:text-gray-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6h.1a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v12"
-        />
-      </svg>
+      {/* Upload cloud icon — hidden once file loaded */}
+      {!hasFile && (
+        <svg
+          className="w-10 h-10 text-gray-400 dark:text-gray-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6h.1a5 5 0 0 1 1 9.9M15 13l-3-3m0 0-3 3m3-3v12"
+          />
+        </svg>
+      )}
 
       {isLoading ? (
         <p className="text-sm text-gray-500" aria-live="polite">Loading…</p>
-      ) : fileName && meshData ? (
-        <div className="text-center">
-          <p className="text-sm font-medium truncate max-w-[14rem]">
-            {fileName}
-          </p>
-          <p className="text-xs text-gray-500">
-            {meshData.faceCount.toLocaleString()} faces ·{' '}
-            {meshData.vertexCount.toLocaleString()} vertices
-          </p>
+      ) : hasFile ? (
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="min-w-0">
+            <p className="text-sm font-medium truncate max-w-[14rem]">
+              {fileName}
+            </p>
+            <p className="text-xs text-gray-500">
+              {meshData.faceCount.toLocaleString()} faces · click to replace
+            </p>
+          </div>
         </div>
       ) : (
         <div className="text-center">
