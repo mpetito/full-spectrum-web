@@ -4,14 +4,14 @@
 
 ## Summary
 
-Add a three-job CI workflow (`quality`, `codeql`, `e2e`) to gate all PRs with type checking, linting, unit tests, security scanning, and end-to-end tests. Add Dependabot for weekly npm and GitHub Actions updates. Streamline the existing `deploy.yml` by removing its redundant test step.
+Add a two-job CI workflow (`quality`, `e2e`) to gate all PRs with type checking, linting, unit tests, and end-to-end tests. CodeQL scanning is handled by the repository's default CodeQL workflow (auto-configured by GitHub). Add Dependabot for weekly npm and GitHub Actions updates. Streamline the existing `deploy.yml` by removing its redundant test step.
 
 ## Architecture Decisions
 
 | Decision           | Choice                                                                     | Rationale                                                                          |
 | ------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Job structure      | 3 parallel/chained jobs                                                    | `quality` is fast-fail gate; `codeql` runs independently; `e2e` waits on `quality` |
-| CodeQL init        | `actions/checkout` → `github/codeql-action/init` → `autobuild` → `analyze` | Standard CodeQL JS/TS workflow; autobuild handles npm projects                     |
+| Job structure      | 2 chained jobs                                                             | `quality` is fast-fail gate; `e2e` waits on `quality`; CodeQL handled by default workflow |
+| CodeQL             | Default CodeQL workflow (GitHub-managed)                                   | Avoids SARIF upload conflicts; auto-handles PR triggers and weekly schedule                |
 | Playwright install | `npx playwright install --with-deps chromium`                              | Installs only Chromium + OS deps; matches `playwright.config.ts` single project    |
 | Coverage provider  | `v8` via Vitest                                                            | Vitest default; no extra dependency                                                |
 | Artifact retention | 7 days for Playwright report                                               | GitHub default; sufficient for debugging failed PRs                                |
@@ -39,20 +39,7 @@ Add a three-job CI workflow (`quality`, `codeql`, `e2e`) to gate all PRs with ty
      - Upload `playwright-report/` artifact on failure (`if: ${{ failure() }}`)
 2. [ ] Verification: Push to a PR branch and confirm `quality` and `e2e` jobs run and pass.
 
-### Phase 2: CodeQL Scanning
-
-1. [ ] Add `codeql` job to `.github/workflows/ci.yml`:
-   - `runs-on: ubuntu-latest`
-   - **Trigger addition**: Add `schedule: cron: '25 4 * * 1'` (weekly Monday) to the workflow-level `on:` block
-   - **Permissions**: `security-events: write`, `contents: read`, `actions: read`
-   - Steps:
-     - `actions/checkout@v4`
-     - `github/codeql-action/init@v3` with `languages: javascript-typescript`
-     - `github/codeql-action/autobuild@v3`
-     - `github/codeql-action/analyze@v3` with `category: /language:javascript-typescript`
-2. [ ] Verification: Confirm CodeQL job completes and SARIF results appear in the repo's Security → Code scanning tab.
-
-### Phase 3: Dependabot Configuration
+### Phase 2: Dependabot Configuration
 
 1. [ ] Create `.github/dependabot.yml`:
    ```yaml
@@ -77,7 +64,7 @@ Add a three-job CI workflow (`quality`, `codeql`, `e2e`) to gate all PRs with ty
    ```
 2. [ ] Verification: Confirm Dependabot tab shows the configuration is active after merging to `main`.
 
-### Phase 4: Streamline Deploy Workflow
+### Phase 3: Streamline Deploy Workflow
 
 1. [ ] Edit `.github/workflows/deploy.yml`:
    - Remove the `npm test` step from the `build` job (CI already gates this)
@@ -88,7 +75,7 @@ Add a three-job CI workflow (`quality`, `codeql`, `e2e`) to gate all PRs with ty
 
 | File                           | Action | Purpose                                                   |
 | ------------------------------ | ------ | --------------------------------------------------------- |
-| `.github/workflows/ci.yml`     | Create | New CI workflow with `quality`, `codeql`, and `e2e` jobs  |
+| `.github/workflows/ci.yml`     | Create | New CI workflow with `quality` and `e2e` jobs             |
 | `.github/dependabot.yml`       | Create | Dependabot config for npm + GitHub Actions weekly updates |
 | `.github/workflows/deploy.yml` | Modify | Remove redundant `npm test` step                          |
 
@@ -97,7 +84,7 @@ Add a three-job CI workflow (`quality`, `codeql`, `e2e`) to gate all PRs with ty
 - [ ] Push CI workflow to a feature branch and open a PR to validate all three jobs run
 - [ ] Intentionally introduce a type error to verify `quality` job fails
 - [ ] Intentionally introduce an ESLint violation to verify `quality` job fails
-- [ ] Verify CodeQL SARIF upload in Security tab after the `codeql` job completes
+- [ ] Verify CodeQL SARIF upload in Security tab via the default CodeQL workflow
 - [ ] Verify `e2e` job uploads Playwright report artifact on test failure
 - [ ] Merge to `main` and verify Dependabot creates its first update PRs within a week
 - [ ] Verify `deploy.yml` still deploys successfully after removing `npm test`
@@ -107,6 +94,6 @@ Add a three-job CI workflow (`quality`, `codeql`, `e2e`) to gate all PRs with ty
 | Risk                                        | Likelihood | Mitigation                                                                                                          |
 | ------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
 | Playwright install slow in CI               | M          | Cache is not practical for Playwright browsers; `--with-deps chromium` installs only one browser to minimize time   |
-| CodeQL autobuild fails on Vite project      | L          | JavaScript/TypeScript CodeQL uses extraction (not compilation); autobuild is optional but included for completeness |
+| CodeQL autobuild fails on Vite project      | L          | Delegated to GitHub's default CodeQL workflow which handles JS/TS extraction natively       |
 | Dependabot PRs overwhelm reviewers          | L          | `open-pull-requests-limit: 5` caps concurrent PRs; weekly cadence is manageable                                     |
 | Removing `npm test` from deploy creates gap | L          | Deploy only triggers on `main` push; CI runs on all PRs targeting `main`, so tests always run before merge          |

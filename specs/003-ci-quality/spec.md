@@ -37,9 +37,9 @@ Add a comprehensive CI pipeline that gates every PR with tests, type checking, l
 
 - **FR-1**: A `ci.yml` workflow runs on every push to `main` and every PR targeting `main`.
 - **FR-2**: The CI workflow includes a `quality` job that runs `tsc -b`, `eslint .`, and `vitest run --coverage` in sequence.
-- **FR-3**: The CI workflow includes a `codeql` job using `github/codeql-action` to scan JavaScript/TypeScript for security vulnerabilities.
+- **FR-3**: CodeQL security scanning for JavaScript/TypeScript is handled by the repository's default CodeQL workflow (auto-configured by GitHub), running on PRs and weekly schedule.
 - **FR-4**: The CI workflow includes an `e2e` job that installs Playwright browsers and runs `playwright test` with HTML report upload on failure.
-- **FR-5**: A `dependabot.yml` configures weekly updates for the `npm` ecosystem (root `/`) and `github-actions` ecosystem (`.github/workflows/`).
+- **FR-5**: A `dependabot.yml` configures weekly updates for the `npm` ecosystem (root `/`) and `github-actions` ecosystem (root `/`).
 - **FR-6**: The `deploy.yml` workflow is updated to depend on the CI workflow succeeding (or at minimum removes the redundant `npm test` step since CI already covers it).
 
 ### Non-Functional
@@ -47,21 +47,22 @@ Add a comprehensive CI pipeline that gates every PR with tests, type checking, l
 - **NF-1**: CI completes in under 5 minutes for the `quality` job on typical PRs.
 - **NF-2**: npm dependencies are cached via `actions/setup-node` cache to minimize install time.
 - **NF-3**: The `e2e` job only runs after the `quality` job passes (fail fast).
-- **NF-4**: CodeQL runs on a separate schedule (weekly) in addition to PR triggers to catch newly disclosed vulnerabilities.
+- **NF-4**: CodeQL runs via the repository's default CodeQL workflow on a separate schedule (weekly) in addition to PR triggers.
 - **NF-5**: Dependabot PRs are limited to 5 open at a time to avoid review fatigue.
 
 ## Design Constraints
 
-- **Node 22**: Match the version used in `deploy.yml` and `package.json` engines.
+- **Node 22**: Use Node 22 consistently across CI workflows, matching the version used in `deploy.yml`.
 - **npm**: Project uses npm (not pnpm/yarn) — `npm ci` for reproducible installs.
 - **Playwright single project**: Only Desktop Chrome is configured; CI should match.
 - **No secrets required**: All workflows must function without repository secrets (public repo, open-source tooling only).
 
 ## Acceptance Criteria
 
-- [ ] Pushing a commit to a PR branch triggers the CI workflow with `quality`, `codeql`, and `e2e` jobs
+- [ ] Pushing a commit to a PR branch triggers the CI workflow with `quality` and `e2e` jobs
+- [ ] CodeQL scanning runs via the repository's default CodeQL workflow (separate from ci.yml)
 - [ ] `quality` job fails if TypeScript has type errors, ESLint reports violations, or any Vitest test fails
-- [ ] `codeql` job completes and uploads SARIF results to the Security tab
+- [ ] CodeQL completes and uploads SARIF results to the Security tab via the default CodeQL workflow
 - [ ] `e2e` job installs Playwright Chromium, runs e2e tests, and uploads HTML report artifact on failure
 - [ ] `dependabot.yml` exists at `.github/dependabot.yml` with npm and github-actions ecosystems configured for weekly updates
 - [ ] `deploy.yml` no longer runs tests redundantly (CI handles test gating)
@@ -72,7 +73,7 @@ Add a comprehensive CI pipeline that gates every PR with tests, type checking, l
 | Decision                 | Choice                              | Rationale                                                |
 | ------------------------ | ----------------------------------- | -------------------------------------------------------- |
 | CI trigger               | `push: main` + `pull_request: main` | Covers direct pushes and PR validation                   |
-| CodeQL schedule          | Weekly cron + PR triggers           | Catches new CVEs between PRs                             |
+| CodeQL schedule          | Default CodeQL workflow (GitHub-managed) | Avoids SARIF conflicts with ci.yml; auto-handles schedule and PR triggers |
 | E2e job dependency       | `needs: quality`                    | Fail fast on cheap checks before expensive browser tests |
 | Coverage tool            | Vitest built-in (`--coverage`)      | Already configured, no extra dependency needed           |
 | Dependabot schedule      | Weekly (Monday)                     | Balances freshness with review burden                    |
