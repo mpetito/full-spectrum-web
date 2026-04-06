@@ -20,7 +20,7 @@ npm run build          # TypeScript type-check + Vite production build
 
 | Directory          | Role                                                   |
 | ------------------ | ------------------------------------------------------ |
-| `src/lib/`         | Pure TypeScript processing library — **no DOM deps**   |
+| `src/lib/`         | Pure TypeScript processing library (uses DOM APIs for XML; needs polyfill for Node) |
 | `src/components/`  | React UI components (React 19 + Tailwind CSS v4)       |
 | `src/state/`       | App-wide React context (`AppContext.tsx`)               |
 | `src/hooks/`       | Custom React hooks (e.g. `useProcessing`)              |
@@ -34,18 +34,18 @@ npm run build          # TypeScript type-check + Vite production build
 - **Cyclic palette** — Strict modulus-based alternation: `filament = palette[layer_index % len]`
 - **Gradient palette** — Bresenham-style error accumulation mapping color stops at normalized heights (0.0–1.0) to discrete filament assignments
 - **Boundary subdivision** — Bisection of triangle faces that straddle layer boundaries
-- **Layer height** — Blending works at ≤ 0.12 mm; the `layer_height` parameter drives `floor(centroid_z / layer_height)` indexing
+- **Layer height** — Blending works at ≤ 0.12 mm; layer indexing is relative to region minimum Z: `floor((centroid_z - z_min + ε) / layer_height)`
 
 ### Module Boundaries
 
-- `src/lib/` is portable to Node.js — never import browser APIs or React here
+- `src/lib/` is portable to Node.js with a DOM polyfill (e.g. happy-dom) — never import React here
 - `src/components/` may import from `src/lib/` and `src/state/`, never the reverse
-- 3MF read supports both OrcaSlicer and PrusaSlicer dialects; write always outputs OrcaSlicer format
+- 3MF read supports both OrcaSlicer and PrusaSlicer dialects; `write3mf` outputs `paint_color`, `slic3rpe:mmu_segmentation`, or both via `targetFormat` (default `both`)
 
 ## Code Style
 
 - TypeScript strict mode — avoid `any`
-- Tailwind CSS v4 (CSS-first config with `@theme` blocks, not `tailwind.config.js`)
+- Tailwind CSS v4 (CSS-first config via `@import "tailwindcss"`, not `tailwind.config.js`)
 - Tests live in `__tests__/` directories adjacent to the code they test
 - E2E tests go in `e2e/` and use Playwright with Chromium
 
@@ -57,7 +57,7 @@ npm run build          # TypeScript type-check + Vite production build
 
 ## Do Not
 
-- ❌ Import DOM or React APIs in `src/lib/` — it must stay portable
+- ❌ Import React APIs in `src/lib/` — it must stay portable (DOM APIs for XML parsing are OK)
 - ❌ Use `any` types — add proper type annotations
 - ❌ Modify files under `coverage/`, `playwright-report/`, or `test-results/` — these are generated
 - ❌ Hard-code colors — use Tailwind design tokens

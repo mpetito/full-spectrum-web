@@ -2,15 +2,15 @@
 
 **Z-axis color dithering for multi-material FDM prints.**
 
-Multi-material FDM printers print one filament per layer. Dither3D exploits this
-by alternating which filament is assigned to each layer — at fine layer heights
-(≤ 0.12 mm) the eye blends adjacent colors together, the same way halftone dots
-merge into continuous tones in print media.
+Dither3D assigns a single filament to each Z-layer band within a painted region,
+then rapidly alternates which filament appears from one layer to the next. At fine
+layer heights (≤ 0.12 mm) the eye blends adjacent colors together, the same way
+halftone dots merge into continuous tones in print media.
 
 Load a painted 3MF, map each painted region to a cyclic or gradient color palette,
-and Dither3D outputs a new 3MF with the dithered pattern baked in. Slice it with
-**OrcaSlicer**, **BambuStudio**, or **PrusaSlicer** — any slicer that supports
-painted multi-material 3MF objects.
+and Dither3D outputs a new 3MF with the dithered pattern baked in. Tested with
+**OrcaSlicer**, **BambuStudio**, and **PrusaSlicer**; other slicers may work if
+they support painted multi-material 3MF objects.
 
 No slicer plugins. No forked slicer builds. Runs entirely in your browser —
 nothing is uploaded to a server.
@@ -36,11 +36,11 @@ nothing is uploaded to a server.
 
 ### The Core Technique
 
-FDM color dithering works along the Z axis. Each layer still uses a single
-filament, but Dither3D controls *which* filament is assigned to each layer. At
-fine layer heights (≤ 0.12 mm), alternating red and blue layers blend
-perceptually into purple from normal viewing distances — the same principle
-behind halftone printing.
+FDM color dithering works along the Z axis. Within a painted region, each
+Z-layer band uses a single filament, but Dither3D controls *which* filament is
+assigned to each band. At fine layer heights (≤ 0.12 mm), alternating red and
+blue bands blend perceptually into purple from normal viewing distances — the
+same principle behind halftone printing.
 
 This technique was pioneered by the community around
 [OrcaSlicer-FullSpectrum](https://github.com/ratdoux/OrcaSlicer-FullSpectrum),
