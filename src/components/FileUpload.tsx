@@ -133,7 +133,7 @@ export function FileUpload() {
               {fileName}
             </p>
             <p className="text-xs text-gray-500">
-              {t('fileUpload.fileInfo', { count: meshData.faceCount.toLocaleString() })}
+              {t('fileUpload.fileInfo', { count: meshData.faceCount })}
             </p>
           </div>
         </div>

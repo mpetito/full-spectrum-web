@@ -53,7 +53,7 @@ export function FilamentList() {
             />
             <span className="font-medium">#{filament}</span>
             <span className="ml-auto text-gray-500 dark:text-gray-400 tabular-nums">
-              {t('filamentList.faceCount', { count: count.toLocaleString() })}
+              {t('filamentList.faceCount', { count })}
             </span>
           </li>
         ))}

@@ -23,6 +23,10 @@ i18n
     interpolation: {
       escapeValue: false,
     },
+    initImmediate: false,
+    react: {
+      useSuspense: false,
+    },
     detection: {
       order: ['localStorage', 'navigator'],
       lookupLocalStorage: 'dither3d-locale',
