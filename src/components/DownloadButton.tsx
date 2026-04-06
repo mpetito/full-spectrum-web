@@ -4,8 +4,8 @@ export function DownloadButton() {
   const { outputBytes, status, inputFilename } = useAppState();
 
   const downloadName = inputFilename
-    ? `${inputFilename}_full-spectrum.3mf`
-    : 'full-spectrum-output.3mf';
+    ? `${inputFilename}_dither3d.3mf`
+    : 'dither3d-output.3mf';
 
   const handleDownload = () => {
     if (!outputBytes) return;

@@ -1,4 +1,4 @@
-import type { ColorMapping, Palette, FullSpectrumConfig } from '../lib/config';
+import type { ColorMapping, Palette, Dither3DConfig } from '../lib/config';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { CyclicEditor } from './CyclicEditor';
 import { GradientEditor } from './GradientEditor';
@@ -23,7 +23,7 @@ export function PaletteMapper() {
   const mappings: ColorMapping[] = [...config.colorMappings];
 
   const dispatchMappings = (next: ColorMapping[]) => {
-    const updated: FullSpectrumConfig = { ...config, colorMappings: next };
+    const updated: Dither3DConfig = { ...config, colorMappings: next };
     dispatch({ type: 'UPDATE_CONFIG', config: updated });
   };
 

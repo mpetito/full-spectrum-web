@@ -1,4 +1,4 @@
-/** Shared constants for the Full Spectrum UI. */
+/** Shared constants for the Dither3D UI. */
 
 export const FILAMENT_COLORS = [
   '#808080', // 0: default/unassigned (gray)

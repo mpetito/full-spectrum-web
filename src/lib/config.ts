@@ -31,7 +31,7 @@ export interface ColorMapping {
     outputPalette: Palette;
 }
 
-export interface FullSpectrumConfig {
+export interface Dither3DConfig {
     layerHeightMm: number;
     targetFormat: string;
     colorMappings: readonly ColorMapping[];
@@ -67,7 +67,7 @@ function parsePalette(data: Record<string, unknown>): Palette {
     }
 }
 
-export function loadConfigFromJson(json: string): FullSpectrumConfig {
+export function loadConfigFromJson(json: string): Dither3DConfig {
     let raw: Record<string, unknown>;
     try {
         raw = JSON.parse(json) as Record<string, unknown>;
@@ -106,7 +106,7 @@ export function loadConfigFromJson(json: string): FullSpectrumConfig {
         mappings.push({ inputFilament: inputFil as number, outputPalette: palette });
     }
 
-    const config: FullSpectrumConfig = {
+    const config: Dither3DConfig = {
         layerHeightMm: layerHeight as number,
         targetFormat,
         colorMappings: mappings,
@@ -121,7 +121,7 @@ export function loadConfigFromJson(json: string): FullSpectrumConfig {
     return config;
 }
 
-export function validateConfig(config: FullSpectrumConfig): string[] {
+export function validateConfig(config: Dither3DConfig): string[] {
     const warnings: string[] = [];
 
     if (config.boundaryStrategy !== 'bisection' && config.boundaryStrategy !== 'geometry') {
@@ -200,7 +200,7 @@ export function validateConfig(config: FullSpectrumConfig): string[] {
 export function defaultConfig(
     layerHeight: number,
     targetFormat = 'both',
-): FullSpectrumConfig {
+): Dither3DConfig {
     return {
         layerHeightMm: layerHeight,
         targetFormat,

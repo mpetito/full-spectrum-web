@@ -83,7 +83,7 @@ export interface ThreeMFData {
   filamentColors?: string[];
   layerHeight?: number;
   initialLayerHeight?: number;
-  fullSpectrumConfig?: Record<string, unknown>;
+  dither3dConfig?: Record<string, unknown>;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -444,13 +444,13 @@ export function read3mf(data: ArrayBuffer, flatten = false): ThreeMFData {
 
   // Parse additional metadata
   const slicerMeta = parseSlicerMetadata(entries);
-  let fullSpectrumConfig: Record<string, unknown> | undefined;
+  let dither3dConfig: Record<string, unknown> | undefined;
 
-  // Check for full-spectrum config JSON
+  // Check for dither3d config JSON
   for (const name of Object.keys(entries)) {
-    if (name.toLowerCase() === 'metadata/full-spectrum.config.json') {
+    if (name.toLowerCase() === 'metadata/dither3d.config.json') {
       try {
-        fullSpectrumConfig = JSON.parse(decodeText(entries[name])) as Record<string, unknown>;
+        dither3dConfig = JSON.parse(decodeText(entries[name])) as Record<string, unknown>;
       } catch {
         // Silently ignore malformed config
       }
@@ -466,7 +466,7 @@ export function read3mf(data: ArrayBuffer, flatten = false): ThreeMFData {
     faceColors,
     defaultFilament,
     ...slicerMeta,
-    fullSpectrumConfig,
+    dither3dConfig,
   };
 }
 
@@ -594,7 +594,7 @@ export function write3mf(
   };
 
   if (metadata?.config) {
-    zipEntries['Metadata/full-spectrum.config.json'] = strToU8(
+    zipEntries['Metadata/dither3d.config.json'] = strToU8(
       JSON.stringify(metadata.config, null, 2),
     );
   }

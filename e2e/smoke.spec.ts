@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Smoke tests', () => {
     test('app loads with title and heading', async ({ page }) => {
         await page.goto('/');
-        await expect(page).toHaveTitle(/Full Spectrum/);
-        await expect(page.locator('h1')).toHaveText('Full Spectrum');
+        await expect(page).toHaveTitle(/Dither3D/);
+        await expect(page.locator('h1')).toHaveText('Dither3D');
     });
 
     test('upload drop zone is visible', async ({ page }) => {

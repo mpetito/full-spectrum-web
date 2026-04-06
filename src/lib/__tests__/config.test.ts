@@ -1,6 +1,6 @@
 /** Tests for config loading and validation. */
 import { describe, it, expect } from 'vitest';
-import { loadConfigFromJson, validateConfig, defaultConfig, ConfigError, type FullSpectrumConfig } from '../config';
+import { loadConfigFromJson, validateConfig, defaultConfig, ConfigError, type Dither3DConfig } from '../config';
 
 const VALID_CYCLIC_JSON = JSON.stringify({
     layer_height_mm: 0.1,
@@ -93,7 +93,7 @@ describe('loadConfigFromJson', () => {
 
 describe('validateConfig', () => {
     // Helper to build a valid config with overrides for isolated validation tests
-    function testConfig(overrides: Partial<FullSpectrumConfig> = {}): FullSpectrumConfig {
+    function testConfig(overrides: Partial<Dither3DConfig> = {}): Dither3DConfig {
         return {
             layerHeightMm: 0.1,
             targetFormat: 'both',

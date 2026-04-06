@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { useAppState, useAppDispatch } from '../state/AppContext';
-import { loadConfigFromJson, type FullSpectrumConfig } from '../lib/config';
+import { loadConfigFromJson, type Dither3DConfig } from '../lib/config';
 
-function configToJson(config: FullSpectrumConfig): string {
+function configToJson(config: Dither3DConfig): string {
   return JSON.stringify(
     {
       layer_height_mm: config.layerHeightMm,
@@ -35,7 +35,7 @@ export function ConfigExportButton() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'full-spectrum.config.json';
+    a.download = 'dither3d.config.json';
     a.click();
     URL.revokeObjectURL(url);
   };

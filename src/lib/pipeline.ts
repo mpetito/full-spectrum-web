@@ -1,6 +1,6 @@
 /** Pipeline orchestration: wire all modules together. */
 
-import type { FullSpectrumConfig, ColorMapping, Palette } from './config';
+import type { Dither3DConfig, ColorMapping, Palette } from './config';
 import { filamentToHex } from './encoding';
 import type { MeshData } from './mesh';
 import {
@@ -37,7 +37,7 @@ export interface LayerColorData {
 }
 
 function findMapping(
-  config: FullSpectrumConfig,
+  config: Dither3DConfig,
   inputFilament: number,
 ): ColorMapping | undefined {
   return config.colorMappings.find((cm) => cm.inputFilament === inputFilament);
@@ -55,7 +55,7 @@ function defaultCyclicPalette(): Palette {
  */
 function buildLayerFilamentMap(
   mesh: MeshData,
-  config: FullSpectrumConfig,
+  config: Dither3DConfig,
   clusters: Map<number, number[]>,
   defaultFilament: number,
 ): { layerMap: Map<number, number>; globalZMin: number } {
@@ -149,7 +149,7 @@ export interface ProcessOptions {
 }
 
 /**
- * Run the Full Spectrum pipeline on a 3MF ArrayBuffer.
+ * Run the Dither3D pipeline on a 3MF ArrayBuffer.
  *
  * @param inputData Raw 3MF file bytes
  * @param config Palette configuration
@@ -158,7 +158,7 @@ export interface ProcessOptions {
  */
 export function process(
   inputData: ArrayBuffer,
-  config: FullSpectrumConfig,
+  config: Dither3DConfig,
   options?: ProcessOptions,
 ): [PipelineResult, Uint8Array | undefined, LayerColorData] {
   const flatten = options?.flatten ?? false;
@@ -312,7 +312,7 @@ export function process(
  */
 export async function processAsync(
   inputData: ArrayBuffer,
-  config: FullSpectrumConfig,
+  config: Dither3DConfig,
   options?: ProcessOptions,
 ): Promise<[PipelineResult, Uint8Array | undefined, LayerColorData]> {
   const flatten = options?.flatten ?? false;

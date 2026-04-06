@@ -41,7 +41,7 @@ describe('write3mf metadata', () => {
   it('write3mf without metadata produces no extra entries', () => {
     const entries = writeAndUnzip();
     const names = Object.keys(entries);
-    expect(names).not.toContain('Metadata/full-spectrum.config.json');
+    expect(names).not.toContain('Metadata/dither3d.config.json');
   });
 
   it('write3mf with filament colors writes display_color entries', () => {
@@ -70,17 +70,17 @@ describe('write3mf metadata', () => {
     expect(configText).toContain('value="0.16"');
   });
 
-  it('write3mf with config writes full-spectrum.config.json', () => {
+  it('write3mf with config writes dither3d.config.json', () => {
     const config = { layer_height_mm: 0.1, color_mappings: [] };
     const entries = writeAndUnzip({ config });
-    expect(Object.keys(entries)).toContain('Metadata/full-spectrum.config.json');
-    const json = JSON.parse(new TextDecoder().decode(entries['Metadata/full-spectrum.config.json']));
+    expect(Object.keys(entries)).toContain('Metadata/dither3d.config.json');
+    const json = JSON.parse(new TextDecoder().decode(entries['Metadata/dither3d.config.json']));
     expect(json.layer_height_mm).toBe(0.1);
   });
 
   it('write3mf without config does not include config JSON', () => {
     const entries = writeAndUnzip({ layerHeight: 0.1 });
-    expect(Object.keys(entries)).not.toContain('Metadata/full-spectrum.config.json');
+    expect(Object.keys(entries)).not.toContain('Metadata/dither3d.config.json');
   });
 });
 
@@ -116,14 +116,14 @@ describe('read3mf metadata', () => {
     expect(data.initialLayerHeight).toBe(0.2);
   });
 
-  it('reads full-spectrum config JSON', () => {
+  it('reads dither3d config JSON', () => {
     const config = { layer_height_mm: 0.12, color_mappings: [{ input_filament: 1 }] };
     const buf = make3mfBuffer(MINIMAL_MODEL, {
       'Metadata/Slic3r_PE_model.config': strToU8(`<?xml version="1.0"?><config><object id="1"><metadata type="object" key="extruder" value="1"/></object></config>`),
-      'Metadata/full-spectrum.config.json': strToU8(JSON.stringify(config)),
+      'Metadata/dither3d.config.json': strToU8(JSON.stringify(config)),
     });
     const data = read3mf(buf);
-    expect(data.fullSpectrumConfig).toEqual(config);
+    expect(data.dither3dConfig).toEqual(config);
   });
 
   it('returns undefined metadata for plain 3MF', () => {
@@ -131,16 +131,16 @@ describe('read3mf metadata', () => {
     const data = read3mf(buf);
     expect(data.filamentColors).toBeUndefined();
     expect(data.layerHeight).toBeUndefined();
-    expect(data.fullSpectrumConfig).toBeUndefined();
+    expect(data.dither3dConfig).toBeUndefined();
   });
 
   it('ignores malformed config JSON', () => {
     const buf = make3mfBuffer(MINIMAL_MODEL, {
       'Metadata/Slic3r_PE_model.config': strToU8(`<?xml version="1.0"?><config><object id="1"><metadata type="object" key="extruder" value="1"/></object></config>`),
-      'Metadata/full-spectrum.config.json': strToU8('not valid json{'),
+      'Metadata/dither3d.config.json': strToU8('not valid json{'),
     });
     const data = read3mf(buf);
-    expect(data.fullSpectrumConfig).toBeUndefined();
+    expect(data.dither3dConfig).toBeUndefined();
   });
 });
 
@@ -179,6 +179,6 @@ describe('metadata round-trip', () => {
     const faces = new Uint32Array([0, 1, 2]);
     const bytes = write3mf(verts, faces, 3, 1, [''], 1, 'both', { config });
     const data = read3mf(bytes.buffer as ArrayBuffer);
-    expect(data.fullSpectrumConfig).toEqual(config);
+    expect(data.dither3dConfig).toEqual(config);
   });
 });

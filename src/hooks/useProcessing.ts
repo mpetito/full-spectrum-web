@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { processAsync } from '../lib/pipeline';
-import type { FullSpectrumConfig } from '../lib/config';
+import type { Dither3DConfig } from '../lib/config';
 
-function configToJson(config: FullSpectrumConfig): Record<string, unknown> {
+function configToJson(config: Dither3DConfig): Record<string, unknown> {
   return {
     layer_height_mm: config.layerHeightMm,
     target_format: config.targetFormat,

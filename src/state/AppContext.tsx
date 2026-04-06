@@ -7,7 +7,7 @@ import {
   type Dispatch,
 } from "react";
 import type { ThreeMFData } from "../lib/threemf";
-import type { FullSpectrumConfig } from "../lib/config";
+import type { Dither3DConfig } from "../lib/config";
 import type { PipelineResult, LayerColorData } from "../lib/pipeline";
 export type { ThreeMFData };
 import { defaultConfig } from "../lib/config";
@@ -18,7 +18,7 @@ import { FILAMENT_COLORS } from "../constants";
 export interface AppState {
   meshData: ThreeMFData | null;
   rawFileData: ArrayBuffer | null;
-  config: FullSpectrumConfig;
+  config: Dither3DConfig;
   processedHex: string[] | null;
   result: PipelineResult | null;
   layerColorData: LayerColorData | null;
@@ -37,7 +37,7 @@ export type AppAction =
   | { type: "UPLOAD_START" }
   | { type: "UPLOAD_SUCCESS"; meshData: ThreeMFData; rawFileData: ArrayBuffer }
   | { type: "UPLOAD_ERROR"; error: string }
-  | { type: "UPDATE_CONFIG"; config: FullSpectrumConfig }
+  | { type: "UPDATE_CONFIG"; config: Dither3DConfig }
   | { type: "PROCESS_START" }
   | {
       type: "PROCESS_SUCCESS";

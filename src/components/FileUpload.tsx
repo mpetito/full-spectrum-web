@@ -23,9 +23,9 @@ export function FileUpload() {
         dispatch({ type: 'SET_INPUT_FILENAME', filename: stem });
 
         // Pre-fill from embedded metadata (round-trip support)
-        if (data.fullSpectrumConfig) {
+        if (data.dither3dConfig) {
           try {
-            const config = loadConfigFromJson(JSON.stringify(data.fullSpectrumConfig));
+            const config = loadConfigFromJson(JSON.stringify(data.dither3dConfig));
             dispatch({ type: 'UPDATE_CONFIG', config });
           } catch {
             // Ignore invalid embedded config

@@ -1,11 +1,11 @@
 import { useAppState, useAppDispatch } from '../state/AppContext';
-import { defaultConfig, type FullSpectrumConfig } from '../lib/config';
+import { defaultConfig, type Dither3DConfig } from '../lib/config';
 
 export function GlobalSettings() {
   const { config } = useAppState();
   const dispatch = useAppDispatch();
 
-  const update = (patch: Partial<FullSpectrumConfig>) => {
+  const update = (patch: Partial<Dither3DConfig>) => {
     dispatch({ type: 'UPDATE_CONFIG', config: { ...config, ...patch } });
   };
 

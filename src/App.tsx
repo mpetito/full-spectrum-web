@@ -23,7 +23,7 @@ function AppContent() {
     >
       {/* Left sidebar — spans both rows */}
       <aside className="row-span-2 border-r border-gray-200 dark:border-gray-700 overflow-y-auto p-4 flex flex-col gap-4">
-        <h1 className="text-xl font-bold">Full Spectrum</h1>
+        <h1 className="text-xl font-bold">Dither3D</h1>
         <FileUpload />
         <FilamentList />
         <GlobalSettings />
@@ -53,8 +53,14 @@ function AppContent() {
       </main>
 
       {/* Status bar — bottom-right */}
-      <footer className="border-t border-gray-200 dark:border-gray-700 px-4 py-2">
+      <footer className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
         <ProcessingStatus />
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Dither3D is open source software licensed under the AGPLv3, subject to its terms.{' '}
+          <a href="https://github.com/mpetito/dither3d/blob/main/LICENSE" className="underline hover:text-gray-600 dark:hover:text-gray-400" target="_blank" rel="noopener noreferrer">AGPLv3 License</a>
+          {' · '}
+          <a href="https://github.com/mpetito/dither3d" className="underline hover:text-gray-600 dark:hover:text-gray-400" target="_blank" rel="noopener noreferrer">github.com/mpetito/dither3d</a>
+        </p>
       </footer>
     </div>
   );
