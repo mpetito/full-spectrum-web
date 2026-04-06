@@ -1,4 +1,4 @@
-import { AppProvider, useAppState } from './state/AppContext';
+import { AppProvider } from './state/AppContext';
 import { FileUpload } from './components/FileUpload';
 import { MeshViewer } from './components/MeshViewer';
 import { FilamentList } from './components/FilamentList';
@@ -15,8 +15,6 @@ import { PreviewToggle } from './components/PreviewToggle';
 
 function AppContent() {
   useProcessing();
-  const { status, progress } = useAppState();
-  const isProcessing = status === 'processing' && progress !== null && progress.total > 0;
 
   return (
     <div
@@ -55,11 +53,9 @@ function AppContent() {
       </main>
 
       {/* Status bar — bottom-right */}
-      <footer className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between overflow-hidden">
+      <footer className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
         <ProcessingStatus />
-        <p className={`text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 flex-shrink-0 transition-all duration-500 ease-in-out ${
-          isProcessing ? 'opacity-0 translate-y-full' : 'opacity-100 translate-y-0'
-        }`}>
+        <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 flex-shrink-0">
           Dither3D is open source software licensed under the{' '}
           <a href="https://github.com/mpetito/dither3d/blob/main/LICENSE" className="underline hover:text-gray-600 dark:hover:text-gray-400" target="_blank" rel="noopener noreferrer">AGPLv3</a>.
           <a href="https://github.com/mpetito/dither3d" className="ml-1 hover:text-gray-600 dark:hover:text-gray-400" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">
