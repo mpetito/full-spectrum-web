@@ -1,0 +1,93 @@
+{
+  "app": {
+    "title": "Dither3D",
+    "licenseText": "Dither3D 是基于以下许可证的开源软件：",
+    "licenseType": "AGPLv3",
+    "githubAriaLabel": "GitHub 仓库"
+  },
+  "fileUpload": {
+    "ariaLabel": "上传 3MF 文件",
+    "inputAriaLabel": "选择 3MF 或 STL 文件",
+    "loading": "加载中…",
+    "fileInfo": "{{count}} 个面 · 点击替换",
+    "dropHint": "将 .3mf 文件拖放到此处",
+    "browseHint": "或点击浏览"
+  },
+  "filamentList": {
+    "heading": "耗材",
+    "faceCount": "{{count}} 个面"
+  },
+  "globalSettings": {
+    "heading": "设置",
+    "layerHeight": "层高：{{value}} mm",
+    "resetTooltip": "双击重置",
+    "targetFormat": "目标格式",
+    "formatPrusaslicer": "PrusaSlicer",
+    "formatBambu": "BambuStudio",
+    "formatBoth": "两者",
+    "boundarySplit": "边界拆分",
+    "maxSplitDepth": "最大拆分深度：{{value}}"
+  },
+  "paletteMapper": {
+    "heading": "颜色映射",
+    "inputLabel": "输入",
+    "filamentRemoved": "{{index}}（已移除）",
+    "removeMappingTooltip": "移除映射",
+    "typeCyclic": "循环",
+    "typeGradient": "渐变",
+    "addMapping": "+ 添加映射"
+  },
+  "filamentColorEditor": {
+    "heading": "耗材颜色",
+    "colorAriaLabel": "耗材 {{index}} 颜色",
+    "resetTooltip": "双击重置",
+    "removeTooltip": "移除最后一个耗材",
+    "removeAriaLabel": "移除最后一个耗材",
+    "addTooltip": "添加耗材颜色",
+    "addAriaLabel": "添加耗材颜色"
+  },
+  "outputStats": {
+    "heading": "输出",
+    "faces": "面数",
+    "layers": "层数",
+    "boundaryFaces": "边界面",
+    "distribution": "分布",
+    "filament": "耗材 {{index}}"
+  },
+  "downloadButton": {
+    "label": "下载 .3mf"
+  },
+  "processingStatus": {
+    "idle": "就绪",
+    "loading": "正在加载文件…",
+    "processing": "处理中…",
+    "ready": "完成",
+    "error": "错误"
+  },
+  "previewToggle": {
+    "input": "输入",
+    "output": "输出"
+  },
+  "configImportExport": {
+    "exportButton": "导出配置",
+    "importButton": "导入",
+    "parseError": "配置解析失败"
+  },
+  "errorBoundary": {
+    "heading": "出了点问题",
+    "retry": "重试"
+  },
+  "gradientEditor": {
+    "label": "渐变（{{count}} 个节点）",
+    "removeStopTooltip": "移除节点",
+    "addStop": "+ 添加节点"
+  },
+  "cyclicEditor": {
+    "label": "图案（{{count}} 个位置）",
+    "removeTooltip": "移除",
+    "addEntry": "+"
+  },
+  "common": {
+    "languageSelector": "语言"
+  }
+}

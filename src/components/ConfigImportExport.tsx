@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { loadConfigFromJson, type Dither3DConfig } from '../lib/config';
 
@@ -27,6 +28,7 @@ function configToJson(config: Dither3DConfig): string {
 }
 
 export function ConfigExportButton() {
+  const { t } = useTranslation();
   const { config } = useAppState();
 
   const handleExport = () => {
@@ -45,12 +47,13 @@ export function ConfigExportButton() {
       onClick={handleExport}
       className="w-full px-3 py-1.5 rounded text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
     >
-      Export config
+      {t('configImportExport.exportButton')}
     </button>
   );
 }
 
 export function ConfigImportButton() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +71,7 @@ export function ConfigImportButton() {
       const parsed = loadConfigFromJson(text);
       dispatch({ type: 'UPDATE_CONFIG', config: parsed });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse config');
+      setError(err instanceof Error ? err.message : t('configImportExport.parseError'));
     }
     // Reset input so same file can be re-imported
     e.target.value = '';
@@ -80,7 +83,7 @@ export function ConfigImportButton() {
         onClick={handleImport}
         className="px-2 py-0.5 rounded text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        Import
+        {t('configImportExport.importButton')}
       </button>
       <input
         ref={fileInputRef}

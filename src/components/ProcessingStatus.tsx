@@ -1,14 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../state/AppContext';
 
-const STATUS_TEXT: Record<string, string> = {
-  idle: 'Ready',
-  loading: 'Loading file…',
-  processing: 'Processing…',
-  ready: 'Done',
-  error: 'Error',
-};
-
 export function ProcessingStatus() {
+  const { t } = useTranslation();
   const { status, error, progress } = useAppState();
 
   const showProgress = status === 'processing' && progress && progress.total > 0;
@@ -47,7 +41,7 @@ export function ProcessingStatus() {
                 : 'text-gray-500 dark:text-gray-400'
             }
           >
-            {STATUS_TEXT[status] ?? status}
+            {t('processingStatus.' + status)}
           </span>
           {error && (
             <span className="text-red-600 dark:text-red-400 truncate ml-1">

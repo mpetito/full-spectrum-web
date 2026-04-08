@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../state/AppContext';
 import { FILAMENT_COLORS } from '../constants';
 
 export function FilamentList() {
+  const { t } = useTranslation();
   const { meshData } = useAppState();
 
   const filaments = useMemo(() => {
@@ -34,7 +36,7 @@ export function FilamentList() {
   return (
     <div className="flex flex-col gap-1">
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-        Filaments
+        {t('filamentList.heading')}
       </h2>
       <ul className="flex flex-col gap-1">
         {filaments.map(({ filament, count }) => (
@@ -51,7 +53,7 @@ export function FilamentList() {
             />
             <span className="font-medium">#{filament}</span>
             <span className="ml-auto text-gray-500 dark:text-gray-400 tabular-nums">
-              {count.toLocaleString()} faces
+              {t('filamentList.faceCount', { count })}
             </span>
           </li>
         ))}

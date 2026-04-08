@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { FILAMENT_COLORS } from '../constants';
 import { MAX_FILAMENTS } from '../lib/encoding';
@@ -6,6 +7,7 @@ import { MAX_FILAMENTS } from '../lib/encoding';
 const MAX_FILAMENT_SLOTS = MAX_FILAMENTS + 1;
 
 export function FilamentColorEditor() {
+  const { t } = useTranslation();
   const { filamentColors } = useAppState();
   const dispatch = useAppDispatch();
 
@@ -41,11 +43,11 @@ export function FilamentColorEditor() {
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm space-y-2">
       <h3 className="font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
-        Filament Colors
+        {t('filamentColorEditor.heading')}
       </h3>
       <div className="grid grid-cols-4 gap-x-3 gap-y-2 justify-items-center">
         {filamentColors.map((color, i) => (
-          <div key={i} className="group flex flex-col items-center gap-1 relative" onDoubleClick={() => resetColor(i)} title="Double-click to reset">
+          <div key={i} className="group flex flex-col items-center gap-1 relative" onDoubleClick={() => resetColor(i)} title={t('filamentColorEditor.resetTooltip')}>
             <label className="cursor-pointer">
               <span
                 className="w-8 h-8 rounded-full border-2 border-gray-300 dark:border-gray-600 overflow-hidden relative block"
@@ -56,7 +58,7 @@ export function FilamentColorEditor() {
                   value={color || '#808080'}
                   onChange={(e) => handleColorChange(i, e.target.value)}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  aria-label={`Filament ${i} color`}
+                  aria-label={t('filamentColorEditor.colorAriaLabel', { index: i })}
                 />
               </span>
             </label>
@@ -64,8 +66,8 @@ export function FilamentColorEditor() {
               <button
                 onClick={() => removeColor()}
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 text-[10px] leading-none flex items-center justify-center hover:bg-red-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Remove last filament"
-                aria-label="Remove last filament"
+                title={t('filamentColorEditor.removeTooltip')}
+                aria-label={t('filamentColorEditor.removeAriaLabel')}
               >
                 ×
               </button>
@@ -78,8 +80,8 @@ export function FilamentColorEditor() {
             <button
               onClick={addColor}
               className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:border-indigo-400"
-              title="Add filament color"
-              aria-label="Add filament color"
+              title={t('filamentColorEditor.addTooltip')}
+              aria-label={t('filamentColorEditor.addAriaLabel')}
             >
               +
             </button>

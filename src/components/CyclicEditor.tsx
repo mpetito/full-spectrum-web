@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FILAMENT_COLORS } from '../constants';
 import { MAX_FILAMENTS } from '../lib/encoding';
 
@@ -7,6 +8,7 @@ interface CyclicEditorProps {
 }
 
 export function CyclicEditor({ pattern, onChange }: CyclicEditorProps) {
+  const { t } = useTranslation();
   const updateEntry = (index: number, value: number) => {
     const next = [...pattern];
     next[index] = value;
@@ -25,7 +27,7 @@ export function CyclicEditor({ pattern, onChange }: CyclicEditorProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs text-gray-500 dark:text-gray-400">
-        Pattern ({pattern.length} slots)
+        {t('cyclicEditor.label', { count: pattern.length })}
       </span>
       <div className="flex flex-wrap gap-1.5 items-center">
         {pattern.map((filament, i) => (
@@ -46,7 +48,7 @@ export function CyclicEditor({ pattern, onChange }: CyclicEditorProps) {
               <button
                 onClick={() => removeEntry(i)}
                 className="text-gray-400 hover:text-red-500 text-xs leading-none"
-                title="Remove"
+                title={t('cyclicEditor.removeTooltip')}
               >
                 ×
               </button>
@@ -57,7 +59,7 @@ export function CyclicEditor({ pattern, onChange }: CyclicEditorProps) {
           onClick={addEntry}
           className="rounded border border-dashed border-gray-300 dark:border-gray-600 px-1.5 py-0.5 text-xs text-gray-500 hover:text-indigo-600 hover:border-indigo-400"
         >
-          +
+          {t('cyclicEditor.addEntry')}
         </button>
       </div>
     </div>

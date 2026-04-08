@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { ColorMapping, Palette, Dither3DConfig } from '../lib/config';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { CyclicEditor } from './CyclicEditor';
@@ -17,6 +18,7 @@ function defaultPalette(type: 'cyclic' | 'gradient'): Palette {
 }
 
 export function PaletteMapper() {
+  const { t } = useTranslation();
   const { config, filamentColors } = useAppState();
   const dispatch = useAppDispatch();
 
@@ -66,7 +68,7 @@ export function PaletteMapper() {
     <section>
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          Color Mappings
+          {t('paletteMapper.heading')}
         </h2>
         <ConfigImportButton />
       </div>
@@ -85,7 +87,7 @@ export function PaletteMapper() {
                   style={{ backgroundColor: filamentColors[mapping.inputFilament] ?? '#808080' }}
                 />
                 <label className="text-sm font-medium flex items-center gap-1">
-                  Input
+                  {t('paletteMapper.inputLabel')}
                   <select
                     value={mapping.inputFilament}
                     onChange={(e) => setInputFilament(i, Number(e.target.value))}
@@ -98,7 +100,7 @@ export function PaletteMapper() {
                     ))}
                     {mapping.inputFilament >= filamentColors.length && (
                       <option value={mapping.inputFilament}>
-                        {mapping.inputFilament} (removed)
+                        {t('paletteMapper.filamentRemoved', { index: mapping.inputFilament })}
                       </option>
                     )}
                   </select>
@@ -107,7 +109,7 @@ export function PaletteMapper() {
               <button
                 onClick={() => removeMapping(i)}
                 className="text-gray-400 hover:text-red-500 text-xs"
-                title="Remove mapping"
+                title={t('paletteMapper.removeMappingTooltip')}
               >
                 ✕
               </button>
@@ -119,8 +121,8 @@ export function PaletteMapper() {
               onChange={(e) => setType(i, e.target.value as PaletteType)}
               className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
             >
-              <option value="cyclic">Cyclic</option>
-              <option value="gradient">Gradient</option>
+              <option value="cyclic">{t('paletteMapper.typeCyclic')}</option>
+              <option value="gradient">{t('paletteMapper.typeGradient')}</option>
             </select>
 
             {/* Palette editor */}
@@ -145,7 +147,7 @@ export function PaletteMapper() {
           onClick={addMapping}
           className="mt-2 w-full rounded border border-dashed border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-500 hover:text-indigo-600 hover:border-indigo-400"
         >
-          + Add mapping
+          {t('paletteMapper.addMapping')}
         </button>
       )}
     </section>

@@ -1,0 +1,93 @@
+{
+  "app": {
+    "title": "Dither3D",
+    "licenseText": "Dither3D ist Open-Source-Software, lizenziert unter der",
+    "licenseType": "AGPLv3",
+    "githubAriaLabel": "GitHub-Repository"
+  },
+  "fileUpload": {
+    "ariaLabel": "3MF-Datei hochladen",
+    "inputAriaLabel": "3MF- oder STL-Datei auswählen",
+    "loading": "Wird geladen…",
+    "fileInfo": "{{count}} Flächen · klicken zum Ersetzen",
+    "dropHint": "Eine .3mf-Datei hierher ziehen",
+    "browseHint": "oder klicken zum Durchsuchen"
+  },
+  "filamentList": {
+    "heading": "Filamente",
+    "faceCount": "{{count}} Flächen"
+  },
+  "globalSettings": {
+    "heading": "Einstellungen",
+    "layerHeight": "Schichthöhe: {{value}} mm",
+    "resetTooltip": "Doppelklick zum Zurücksetzen",
+    "targetFormat": "Zielformat",
+    "formatPrusaslicer": "PrusaSlicer",
+    "formatBambu": "BambuStudio",
+    "formatBoth": "Beide",
+    "boundarySplit": "Grenzaufteilung",
+    "maxSplitDepth": "Max. Aufteilungstiefe: {{value}}"
+  },
+  "paletteMapper": {
+    "heading": "Farbzuordnungen",
+    "inputLabel": "Eingabe",
+    "filamentRemoved": "{{index}} (entfernt)",
+    "removeMappingTooltip": "Zuordnung entfernen",
+    "typeCyclic": "Zyklisch",
+    "typeGradient": "Verlauf",
+    "addMapping": "+ Zuordnung hinzufügen"
+  },
+  "filamentColorEditor": {
+    "heading": "Filamentfarben",
+    "colorAriaLabel": "Farbe von Filament {{index}}",
+    "resetTooltip": "Doppelklick zum Zurücksetzen",
+    "removeTooltip": "Letztes Filament entfernen",
+    "removeAriaLabel": "Letztes Filament entfernen",
+    "addTooltip": "Filamentfarbe hinzufügen",
+    "addAriaLabel": "Filamentfarbe hinzufügen"
+  },
+  "outputStats": {
+    "heading": "Ausgabe",
+    "faces": "Flächen",
+    "layers": "Schichten",
+    "boundaryFaces": "Grenzflächen",
+    "distribution": "Verteilung",
+    "filament": "Filament {{index}}"
+  },
+  "downloadButton": {
+    "label": ".3mf herunterladen"
+  },
+  "processingStatus": {
+    "idle": "Bereit",
+    "loading": "Datei wird geladen…",
+    "processing": "Verarbeitung…",
+    "ready": "Fertig",
+    "error": "Fehler"
+  },
+  "previewToggle": {
+    "input": "Eingabe",
+    "output": "Ausgabe"
+  },
+  "configImportExport": {
+    "exportButton": "Konfiguration exportieren",
+    "importButton": "Importieren",
+    "parseError": "Konfiguration konnte nicht gelesen werden"
+  },
+  "errorBoundary": {
+    "heading": "Etwas ist schiefgelaufen",
+    "retry": "Erneut versuchen"
+  },
+  "gradientEditor": {
+    "label": "Verlauf ({{count}} Stufen)",
+    "removeStopTooltip": "Stufe entfernen",
+    "addStop": "+ Stufe hinzufügen"
+  },
+  "cyclicEditor": {
+    "label": "Muster ({{count}} Plätze)",
+    "removeTooltip": "Entfernen",
+    "addEntry": "+"
+  },
+  "common": {
+    "languageSelector": "Sprache"
+  }
+}

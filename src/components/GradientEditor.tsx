@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FILAMENT_COLORS } from '../constants';
 import { MAX_FILAMENTS } from '../lib/encoding';
 import type { GradientStop } from '../lib/config';
@@ -17,6 +18,7 @@ function buildGradientCSS(stops: GradientStop[]): string {
 }
 
 export function GradientEditor({ stops, onChange }: GradientEditorProps) {
+  const { t } = useTranslation();
   const updateStop = (index: number, patch: Partial<GradientStop>) => {
     const next = stops.map((s, i) => (i === index ? { ...s, ...patch } : s));
     onChange(next);
@@ -34,7 +36,7 @@ export function GradientEditor({ stops, onChange }: GradientEditorProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-xs text-gray-500 dark:text-gray-400">
-        Gradient ({stops.length} stops)
+        {t('gradientEditor.label', { count: stops.length })}
       </span>
 
       {/* Preview bar */}
@@ -71,7 +73,7 @@ export function GradientEditor({ stops, onChange }: GradientEditorProps) {
               <button
                 onClick={() => removeStop(i)}
                 className="text-gray-400 hover:text-red-500 text-xs leading-none"
-                title="Remove stop"
+                title={t('gradientEditor.removeStopTooltip')}
               >
                 ×
               </button>
@@ -84,7 +86,7 @@ export function GradientEditor({ stops, onChange }: GradientEditorProps) {
         onClick={addStop}
         className="self-start rounded border border-dashed border-gray-300 dark:border-gray-600 px-2 py-0.5 text-xs text-gray-500 hover:text-indigo-600 hover:border-indigo-400"
       >
-        + Add stop
+        {t('gradientEditor.addStop')}
       </button>
     </div>
   );

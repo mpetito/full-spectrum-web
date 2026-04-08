@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 
 export function PreviewToggle() {
+  const { t } = useTranslation();
   const { previewMode, layerColorData } = useAppState();
   const dispatch = useAppDispatch();
 
@@ -20,7 +22,7 @@ export function PreviewToggle() {
             : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
         }`}
       >
-        Input
+        {t('previewToggle.input')}
       </button>
       <button
         type="button"
@@ -33,7 +35,7 @@ export function PreviewToggle() {
             : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
         } disabled:opacity-40 disabled:cursor-not-allowed`}
       >
-        Output
+        {t('previewToggle.output')}
       </button>
     </div>
   );

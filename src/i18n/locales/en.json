@@ -1,0 +1,93 @@
+{
+  "app": {
+    "title": "Dither3D",
+    "licenseText": "Dither3D is open source software licensed under the",
+    "licenseType": "AGPLv3",
+    "githubAriaLabel": "GitHub repository"
+  },
+  "fileUpload": {
+    "ariaLabel": "Upload 3MF file",
+    "inputAriaLabel": "Choose a 3MF or STL file",
+    "loading": "Loading…",
+    "fileInfo": "{{count}} faces · click to replace",
+    "dropHint": "Drop a .3mf file here",
+    "browseHint": "or click to browse"
+  },
+  "filamentList": {
+    "heading": "Filaments",
+    "faceCount": "{{count}} faces"
+  },
+  "globalSettings": {
+    "heading": "Settings",
+    "layerHeight": "Layer height: {{value}} mm",
+    "resetTooltip": "Double-click to reset",
+    "targetFormat": "Target format",
+    "formatPrusaslicer": "PrusaSlicer",
+    "formatBambu": "BambuStudio",
+    "formatBoth": "Both",
+    "boundarySplit": "Boundary split",
+    "maxSplitDepth": "Max split depth: {{value}}"
+  },
+  "paletteMapper": {
+    "heading": "Color Mappings",
+    "inputLabel": "Input",
+    "filamentRemoved": "{{index}} (removed)",
+    "removeMappingTooltip": "Remove mapping",
+    "typeCyclic": "Cyclic",
+    "typeGradient": "Gradient",
+    "addMapping": "+ Add mapping"
+  },
+  "filamentColorEditor": {
+    "heading": "Filament Colors",
+    "colorAriaLabel": "Filament {{index}} color",
+    "resetTooltip": "Double-click to reset",
+    "removeTooltip": "Remove last filament",
+    "removeAriaLabel": "Remove last filament",
+    "addTooltip": "Add filament color",
+    "addAriaLabel": "Add filament color"
+  },
+  "outputStats": {
+    "heading": "Output",
+    "faces": "Faces",
+    "layers": "Layers",
+    "boundaryFaces": "Boundary faces",
+    "distribution": "Distribution",
+    "filament": "Filament {{index}}"
+  },
+  "downloadButton": {
+    "label": "Download .3mf"
+  },
+  "processingStatus": {
+    "idle": "Ready",
+    "loading": "Loading file…",
+    "processing": "Processing…",
+    "ready": "Done",
+    "error": "Error"
+  },
+  "previewToggle": {
+    "input": "Input",
+    "output": "Output"
+  },
+  "configImportExport": {
+    "exportButton": "Export config",
+    "importButton": "Import",
+    "parseError": "Failed to parse config"
+  },
+  "errorBoundary": {
+    "heading": "Something went wrong",
+    "retry": "Try Again"
+  },
+  "gradientEditor": {
+    "label": "Gradient ({{count}} stops)",
+    "removeStopTooltip": "Remove stop",
+    "addStop": "+ Add stop"
+  },
+  "cyclicEditor": {
+    "label": "Pattern ({{count}} slots)",
+    "removeTooltip": "Remove",
+    "addEntry": "+"
+  },
+  "common": {
+    "languageSelector": "Language"
+  }
+}

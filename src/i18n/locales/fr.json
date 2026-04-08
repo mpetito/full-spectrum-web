@@ -1,0 +1,93 @@
+{
+  "app": {
+    "title": "Dither3D",
+    "licenseText": "Dither3D est un logiciel libre distribué sous licence",
+    "licenseType": "AGPLv3",
+    "githubAriaLabel": "Dépôt GitHub"
+  },
+  "fileUpload": {
+    "ariaLabel": "Téléverser un fichier 3MF",
+    "inputAriaLabel": "Choisir un fichier 3MF ou STL",
+    "loading": "Chargement…",
+    "fileInfo": "{{count}} faces · cliquer pour remplacer",
+    "dropHint": "Déposez un fichier .3mf ici",
+    "browseHint": "ou cliquez pour parcourir"
+  },
+  "filamentList": {
+    "heading": "Filaments",
+    "faceCount": "{{count}} faces"
+  },
+  "globalSettings": {
+    "heading": "Paramètres",
+    "layerHeight": "Hauteur de couche : {{value}} mm",
+    "resetTooltip": "Double-cliquer pour réinitialiser",
+    "targetFormat": "Format cible",
+    "formatPrusaslicer": "PrusaSlicer",
+    "formatBambu": "BambuStudio",
+    "formatBoth": "Les deux",
+    "boundarySplit": "Découpe des limites",
+    "maxSplitDepth": "Profondeur max de découpe : {{value}}"
+  },
+  "paletteMapper": {
+    "heading": "Correspondances de couleurs",
+    "inputLabel": "Entrée",
+    "filamentRemoved": "{{index}} (supprimé)",
+    "removeMappingTooltip": "Supprimer la correspondance",
+    "typeCyclic": "Cyclique",
+    "typeGradient": "Dégradé",
+    "addMapping": "+ Ajouter une correspondance"
+  },
+  "filamentColorEditor": {
+    "heading": "Couleurs des filaments",
+    "colorAriaLabel": "Couleur du filament {{index}}",
+    "resetTooltip": "Double-cliquer pour réinitialiser",
+    "removeTooltip": "Supprimer le dernier filament",
+    "removeAriaLabel": "Supprimer le dernier filament",
+    "addTooltip": "Ajouter une couleur de filament",
+    "addAriaLabel": "Ajouter une couleur de filament"
+  },
+  "outputStats": {
+    "heading": "Résultat",
+    "faces": "Faces",
+    "layers": "Couches",
+    "boundaryFaces": "Faces de bordure",
+    "distribution": "Répartition",
+    "filament": "Filament {{index}}"
+  },
+  "downloadButton": {
+    "label": "Télécharger .3mf"
+  },
+  "processingStatus": {
+    "idle": "Prêt",
+    "loading": "Chargement du fichier…",
+    "processing": "Traitement…",
+    "ready": "Terminé",
+    "error": "Erreur"
+  },
+  "previewToggle": {
+    "input": "Entrée",
+    "output": "Sortie"
+  },
+  "configImportExport": {
+    "exportButton": "Exporter la config",
+    "importButton": "Importer",
+    "parseError": "Échec de l'analyse de la configuration"
+  },
+  "errorBoundary": {
+    "heading": "Une erreur est survenue",
+    "retry": "Réessayer"
+  },
+  "gradientEditor": {
+    "label": "Dégradé ({{count}} arrêts)",
+    "removeStopTooltip": "Supprimer l'arrêt",
+    "addStop": "+ Ajouter un arrêt"
+  },
+  "cyclicEditor": {
+    "label": "Motif ({{count}} emplacements)",
+    "removeTooltip": "Supprimer",
+    "addEntry": "+"
+  },
+  "common": {
+    "languageSelector": "Langue"
+  }
+}

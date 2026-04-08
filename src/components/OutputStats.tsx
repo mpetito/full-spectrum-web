@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../state/AppContext';
 
 export function OutputStats() {
+  const { t } = useTranslation();
   const { result, filamentColors } = useAppState();
 
   if (!result) return null;
@@ -8,18 +10,18 @@ export function OutputStats() {
   return (
     <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm space-y-1">
       <h3 className="font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
-        Output
+        {t('outputStats.heading')}
       </h3>
       <div className="flex justify-between">
-        <span className="text-gray-500">Faces</span>
+        <span className="text-gray-500">{t('outputStats.faces')}</span>
         <span>{result.faceCount.toLocaleString()}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-500">Layers</span>
+        <span className="text-gray-500">{t('outputStats.layers')}</span>
         <span>{result.layerCount}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-500">Boundary faces</span>
+        <span className="text-gray-500">{t('outputStats.boundaryFaces')}</span>
         <span>
           {result.boundaryFaceCount.toLocaleString()} (
           {result.boundaryFacePct.toFixed(1)}%)
@@ -27,7 +29,7 @@ export function OutputStats() {
       </div>
       {/* Filament distribution */}
       <div className="pt-1 border-t border-gray-100 dark:border-gray-700">
-        <span className="text-gray-500 text-xs">Distribution</span>
+        <span className="text-gray-500 text-xs">{t('outputStats.distribution')}</span>
         {Array.from(result.filamentDistribution.entries())
           .sort((a, b) => a[0] - b[0])
           .map(([fil, count]) => (
@@ -37,7 +39,7 @@ export function OutputStats() {
                   className="inline-block w-2 h-2 rounded-full"
                   style={{ backgroundColor: filamentColors[fil] ?? '#999' }}
                 />
-                Filament {fil}
+                {t('outputStats.filament', { index: fil })}
               </span>
               <span>{count.toLocaleString()}</span>
             </div>

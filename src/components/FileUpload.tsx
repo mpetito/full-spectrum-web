@@ -1,10 +1,12 @@
 import { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppState } from '../state/AppContext';
 import { read3mf } from '../lib/threemf';
 import { loadConfigFromJson } from '../lib/config';
 import { FILAMENT_COLORS } from '../constants';
 
 export function FileUpload() {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { status, meshData } = useAppState();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,7 +84,7 @@ export function FileUpload() {
   return (
     <div
       role="button"
-      aria-label="Upload 3MF file"
+      aria-label={t('fileUpload.ariaLabel')}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
@@ -99,7 +101,7 @@ export function FileUpload() {
         ref={inputRef}
         type="file"
         accept=".3mf,.stl"
-        aria-label="Choose a 3MF or STL file"
+        aria-label={t('fileUpload.inputAriaLabel')}
         aria-describedby="file-upload-hint"
         className="hidden"
         onChange={onInputChange}
@@ -123,7 +125,7 @@ export function FileUpload() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-gray-500" aria-live="polite">Loading…</p>
+        <p className="text-sm text-gray-500" aria-live="polite">{t('fileUpload.loading')}</p>
       ) : hasFile ? (
         <div className="flex items-center gap-2 min-w-0">
           <div className="min-w-0">
@@ -131,14 +133,14 @@ export function FileUpload() {
               {fileName}
             </p>
             <p className="text-xs text-gray-500">
-              {meshData.faceCount.toLocaleString()} faces · click to replace
+              {t('fileUpload.fileInfo', { count: meshData.faceCount })}
             </p>
           </div>
         </div>
       ) : (
         <div className="text-center">
-          <p className="text-sm font-medium" id="file-upload-hint">Drop a .3mf file here</p>
-          <p className="text-xs text-gray-500">or click to browse</p>
+          <p className="text-sm font-medium" id="file-upload-hint">{t('fileUpload.dropHint')}</p>
+          <p className="text-xs text-gray-500">{t('fileUpload.browseHint')}</p>
         </div>
       )}
     </div>
