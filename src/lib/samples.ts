@@ -67,20 +67,23 @@ export async function fetchSample(
 
   // Parse the raw JSON to extract filament_colors before passing to loadConfigFromJson
   let rawJson: Record<string, unknown>;
+  let filamentColors: string[] | undefined;
+  let config: Dither3DConfig;
   try {
     rawJson = JSON.parse(configText) as Record<string, unknown>;
+
+    const HEX_COLOR_RE = /^#[0-9a-f]{6}([0-9a-f]{2})?$/i;
+    const { filament_colors: rawColors, ...rest } = rawJson;
+    filamentColors =
+      Array.isArray(rawColors) && rawColors.every((x): x is string => typeof x === 'string' && HEX_COLOR_RE.test(x))
+        ? rawColors.slice(0, FILAMENT_COLORS.length)
+        : undefined;
+
+    config = loadConfigFromJson(JSON.stringify(rest));
   } catch (cause) {
-    throw new Error(`Failed to parse config: ${sample.configPath}`, { cause });
+    const message = cause instanceof Error ? cause.message : String(cause);
+    throw new Error(`Failed to parse config: ${sample.configPath} (${message})`, { cause });
   }
-
-  const HEX_COLOR_RE = /^#[0-9a-f]{6}([0-9a-f]{2})?$/i;
-  const { filament_colors: rawColors, ...rest } = rawJson;
-  const filamentColors =
-    Array.isArray(rawColors) && rawColors.every((x): x is string => typeof x === 'string' && HEX_COLOR_RE.test(x))
-      ? rawColors.slice(0, FILAMENT_COLORS.length)
-      : undefined;
-
-  const config = loadConfigFromJson(JSON.stringify(rest));
 
   // Derive filename stem from model path
   const filename = sample.modelPath.split('/').pop()?.replace(/\.3mf$/i, '') ?? sample.id;

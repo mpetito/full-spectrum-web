@@ -84,10 +84,10 @@ Build the UI component and integrate it into the app layout.
    - On error: `dispatch({ type: 'UPLOAD_ERROR', error: message })` + local error state
 4. [ ] Styling: Tailwind, compact cards matching existing sidebar aesthetic. Loading spinner on the clicked card while fetching.
 5. [ ] Accessibility: `role="list"` / `role="listitem"`, or use `<ul>/<li>` with `<button>` children. Keyboard nav via standard focus management.
-6. [ ] Integrate into `src/App.tsx`:
+6. [ ] Integrate into `src/components/FileUpload.tsx`:
    - Import `SamplePicker`
-   - Render `<SamplePicker />` below `<FileUpload />` in the sidebar
-   - The component self-hides when a file is loaded, so no conditional rendering needed in App
+   - Render the sample picker/dialog from within `FileUpload`'s idle / no-file-loaded UI
+   - Keep the visibility behavior colocated with `FileUpload`, since the picker is hosted there rather than directly in `src/App.tsx`
 7. [ ] Verification: component renders in dev server; clicking a sample loads the model and triggers processing
 
 ### Phase 4: Internationalisation

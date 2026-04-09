@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SAMPLES, fetchSample, type SampleDefinition } from '../samples';
+import { SAMPLES, fetchSample } from '../samples';
 
 describe('SAMPLES registry', () => {
   it('contains at least one sample', () => {
@@ -23,6 +23,9 @@ describe('SAMPLES registry', () => {
 });
 
 describe('fetchSample', () => {
+  // Use a stable id-based lookup instead of benchySample so reordering doesn't break tests
+  const benchySample = SAMPLES.find((s) => s.id === 'benchy-cyclic')!;
+
   const sampleConfig = {
     filament_colors: ['#808080', '#E74C3C', '#3498DB'],
     layer_height_mm: 0.08,
@@ -61,16 +64,11 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    // We need to mock read3mf since the mock arrayBuffer isn't real 3MF
-    // Instead, just test that fetchSample calls fetch with correct URLs and parses config
-    const sample: SampleDefinition = SAMPLES[0];
-
-    // fetchSample calls read3mf internally in the component, not in fetchSample itself
     // fetchSample returns the raw buffer + parsed config
-    const data = await fetchSample(sample, '/');
+    const data = await fetchSample(benchySample, '/');
 
-    expect(mockFetch).toHaveBeenCalledWith(sample.modelPath);
-    expect(mockFetch).toHaveBeenCalledWith(sample.configPath);
+    expect(mockFetch).toHaveBeenCalledWith(benchySample.modelPath);
+    expect(mockFetch).toHaveBeenCalledWith(benchySample.configPath);
     expect(data.modelBuffer).toBe(mockModelBuffer);
     expect(data.config.layerHeightMm).toBe(0.08);
     expect(data.config.colorMappings).toHaveLength(1);
@@ -93,10 +91,10 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    await fetchSample(SAMPLES[0], '/dither3d/');
+    await fetchSample(benchySample, '/dither3d/');
 
-    expect(mockFetch).toHaveBeenCalledWith(`/dither3d${SAMPLES[0].modelPath}`);
-    expect(mockFetch).toHaveBeenCalledWith(`/dither3d${SAMPLES[0].configPath}`);
+    expect(mockFetch).toHaveBeenCalledWith(`/dither3d${benchySample.modelPath}`);
+    expect(mockFetch).toHaveBeenCalledWith(`/dither3d${benchySample.configPath}`);
   });
 
   it('throws on model fetch failure', async () => {
@@ -111,7 +109,7 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    await expect(fetchSample(SAMPLES[0], '/')).rejects.toThrow('Failed to fetch model');
+    await expect(fetchSample(benchySample, '/')).rejects.toThrow('Failed to fetch model');
   });
 
   it('throws on config fetch failure', async () => {
@@ -126,7 +124,7 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    await expect(fetchSample(SAMPLES[0], '/')).rejects.toThrow('Failed to fetch config');
+    await expect(fetchSample(benchySample, '/')).rejects.toThrow('Failed to fetch config');
   });
 
   it('handles config without filament_colors', async () => {
@@ -147,7 +145,7 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    const data = await fetchSample(SAMPLES[0], '/');
+    const data = await fetchSample(benchySample, '/');
     expect(data.filamentColors).toBeUndefined();
   });
 
@@ -166,8 +164,8 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    await expect(fetchSample(SAMPLES[0], '/')).rejects.toThrow(
-      `Failed to parse config: ${SAMPLES[0].configPath}`,
+    await expect(fetchSample(benchySample, '/')).rejects.toThrow(
+      `Failed to parse config: ${benchySample.configPath}`,
     );
   });
 
@@ -188,7 +186,7 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    const data = await fetchSample(SAMPLES[0], '/');
+    const data = await fetchSample(benchySample, '/');
     expect(data.filamentColors).toBeUndefined();
   });
 
@@ -210,7 +208,7 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    const data = await fetchSample(SAMPLES[0], '/');
+    const data = await fetchSample(benchySample, '/');
     // FILAMENT_COLORS has 11 entries
     expect(data.filamentColors).toHaveLength(11);
   });
@@ -230,10 +228,10 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    await fetchSample(SAMPLES[0], '');
+    await fetchSample(benchySample, '');
 
-    expect(mockFetch).toHaveBeenCalledWith(SAMPLES[0].modelPath);
-    expect(mockFetch).toHaveBeenCalledWith(SAMPLES[0].configPath);
+    expect(mockFetch).toHaveBeenCalledWith(benchySample.modelPath);
+    expect(mockFetch).toHaveBeenCalledWith(benchySample.configPath);
   });
 
   it('ignores filament_colors with invalid hex format', async () => {
@@ -253,7 +251,7 @@ describe('fetchSample', () => {
     });
     vi.stubGlobal('fetch', mockFetch);
 
-    const data = await fetchSample(SAMPLES[0], '/');
+    const data = await fetchSample(benchySample, '/');
     expect(data.filamentColors).toBeUndefined();
   });
 
@@ -273,7 +271,7 @@ describe('fetchSample', () => {
     vi.stubGlobal('fetch', mockFetch);
 
     try {
-      await fetchSample(SAMPLES[0], '/');
+      await fetchSample(benchySample, '/');
       expect.fail('Expected an error');
     } catch (e) {
       expect(e).toBeInstanceOf(Error);

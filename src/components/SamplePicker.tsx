@@ -22,6 +22,11 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
+
+    // Reset transient state each time the modal opens
+    setError(null);
+    setLoadingId(null);
+
     if (open && !dialog.open) {
       dialog.showModal();
     } else if (!open && dialog.open) {
@@ -29,13 +34,16 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
     }
   }, [open]);
 
-  // Sync dialog close event (e.g. Escape key) back to parent
+  // Sync user-initiated dialog cancel (e.g. Escape key) back to parent
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    const handleClose = () => onCloseRef.current();
-    dialog.addEventListener('close', handleClose);
-    return () => dialog.removeEventListener('close', handleClose);
+    const handleCancel = (event: Event) => {
+      event.preventDefault();
+      onCloseRef.current();
+    };
+    dialog.addEventListener('cancel', handleCancel);
+    return () => dialog.removeEventListener('cancel', handleCancel);
   }, []);
 
   const handleLoad = useCallback(

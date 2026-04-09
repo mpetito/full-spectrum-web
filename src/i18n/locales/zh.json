@@ -106,6 +106,7 @@
     }
   },
   "common": {
-    "languageSelector": "语言"
+    "languageSelector": "语言",
+    "close": "关闭"
   }
 }

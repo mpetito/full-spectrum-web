@@ -106,6 +106,7 @@
     }
   },
   "common": {
-    "languageSelector": "Idioma"
+    "languageSelector": "Idioma",
+    "close": "Cerrar"
   }
 }
