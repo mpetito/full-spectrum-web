@@ -14,6 +14,8 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,10 +33,10 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    const handleClose = () => onClose();
+    const handleClose = () => onCloseRef.current();
     dialog.addEventListener('close', handleClose);
     return () => dialog.removeEventListener('close', handleClose);
-  }, [onClose]);
+  }, []);
 
   const handleLoad = useCallback(
     async (sample: SampleDefinition) => {

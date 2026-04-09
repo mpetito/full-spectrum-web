@@ -36,6 +36,11 @@ interface ConfigXmlOptions {
   layerHeight?: number;
 }
 
+/** Escape a string for use in an XML attribute value. */
+function escapeXmlAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function configXml(options: ConfigXmlOptions): string {
   const { defaultFilament, filamentColors, layerHeight } = options;
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<config>\n`;
@@ -53,7 +58,7 @@ function configXml(options: ConfigXmlOptions): string {
   if (filamentColors && filamentColors.length > 1) {
     for (let i = 1; i < filamentColors.length; i++) {
       xml += `  <filament id="${i}">\n`;
-      xml += `    <metadata key="display_color" value="${filamentColors[i]}"/>\n`;
+      xml += `    <metadata key="display_color" value="${escapeXmlAttr(filamentColors[i])}"/>\n`;
       xml += `  </filament>\n`;
     }
   }

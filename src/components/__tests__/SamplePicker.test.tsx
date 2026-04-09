@@ -24,9 +24,11 @@ vi.mock('../../lib/threemf', () => ({
 }));
 
 import { fetchSample } from '../../lib/samples';
+import { read3mf } from '../../lib/threemf';
 import type { SampleData } from '../../lib/samples';
 
 const mockFetchSample = vi.mocked(fetchSample);
+const mockRead3mf = vi.mocked(read3mf);
 
 // happy-dom doesn't implement HTMLDialogElement.showModal/close, so polyfill
 beforeEach(() => {
@@ -125,5 +127,101 @@ describe('SamplePicker', () => {
     await waitFor(() => {
       expect(onClose).toHaveBeenCalled();
     });
+  });
+
+  it('calls onClose when close button is clicked', async () => {
+    const user = userEvent.setup();
+    renderWithContext(<SamplePicker open={true} onClose={onClose} />);
+    await user.click(screen.getByLabelText('Close'));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('shows loading text and disables buttons while loading', async () => {
+    const user = userEvent.setup();
+    // Never resolve so we stay in loading state
+    mockFetchSample.mockReturnValueOnce(new Promise(() => {}));
+
+    renderWithContext(<SamplePicker open={true} onClose={onClose} />);
+    await user.click(screen.getByText('Benchy – Cyclic'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Loading…')).toBeInTheDocument();
+    });
+
+    // All sample buttons should be disabled during loading (exclude close button)
+    const buttons = screen.getAllByRole('button').filter(
+      (btn) => !btn.hasAttribute('aria-label'),
+    );
+    for (const btn of buttons) {
+      expect(btn).toBeDisabled();
+    }
+  });
+
+  it('clears error on retry', async () => {
+    const user = userEvent.setup();
+    mockFetchSample.mockRejectedValueOnce(new Error('Network error'));
+
+    renderWithContext(<SamplePicker open={true} onClose={onClose} />);
+    await user.click(screen.getByText('Benchy – Cyclic'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    // Now retry with a never-resolving fetch so we can check error is cleared
+    mockFetchSample.mockReturnValueOnce(new Promise(() => {}));
+    await user.click(screen.getByText('Benchy – Cyclic'));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+  });
+
+  it('syncs dialog open/close with prop changes', () => {
+    const { rerender } = renderWithContext(
+      <SamplePicker open={false} onClose={onClose} />,
+    );
+    const dialog = document.querySelector('dialog')!;
+    expect(dialog.hasAttribute('open')).toBe(false);
+
+    rerender(
+      <SamplePicker open={true} onClose={onClose} />,
+    );
+    expect(dialog.hasAttribute('open')).toBe(true);
+
+    rerender(
+      <SamplePicker open={false} onClose={onClose} />,
+    );
+    expect(dialog.hasAttribute('open')).toBe(false);
+  });
+
+  it('shows error when read3mf throws', async () => {
+    const user = userEvent.setup();
+    const mockData: SampleData = {
+      modelBuffer: new ArrayBuffer(8),
+      config: {
+        layerHeightMm: 0.08,
+        targetFormat: 'both',
+        colorMappings: [
+          { inputFilament: 1, outputPalette: { type: 'cyclic', pattern: [1, 2] } },
+        ],
+        boundarySplit: true,
+        maxSplitDepth: 9,
+        boundaryStrategy: 'bisection',
+      },
+      filename: '3DBenchy',
+    };
+    mockFetchSample.mockResolvedValueOnce(mockData);
+    mockRead3mf.mockImplementationOnce(() => {
+      throw new Error('Invalid 3MF data');
+    });
+
+    renderWithContext(<SamplePicker open={true} onClose={onClose} />);
+    await user.click(screen.getByText('Benchy – Cyclic'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

@@ -150,4 +150,134 @@ describe('fetchSample', () => {
     const data = await fetchSample(SAMPLES[0], '/');
     expect(data.filamentColors).toBeUndefined();
   });
+
+  it('throws descriptive error on malformed JSON config', async () => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('.3mf')) {
+        return Promise.resolve({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(mockModelBuffer),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve('not valid json {{{'),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(fetchSample(SAMPLES[0], '/')).rejects.toThrow(
+      `Failed to parse config: ${SAMPLES[0].configPath}`,
+    );
+  });
+
+  it('ignores filament_colors with non-string elements', async () => {
+    const configBadColors = { ...sampleConfig, filament_colors: [1, null, '#FF0000'] };
+
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('.3mf')) {
+        return Promise.resolve({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(mockModelBuffer),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(configBadColors)),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const data = await fetchSample(SAMPLES[0], '/');
+    expect(data.filamentColors).toBeUndefined();
+  });
+
+  it('clamps filament_colors to FILAMENT_COLORS length', async () => {
+    const longColors = Array.from({ length: 50 }, (_, i) => `#${String(i).padStart(6, '0')}`);
+    const configLong = { ...sampleConfig, filament_colors: longColors };
+
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('.3mf')) {
+        return Promise.resolve({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(mockModelBuffer),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(configLong)),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const data = await fetchSample(SAMPLES[0], '/');
+    // FILAMENT_COLORS has 11 entries
+    expect(data.filamentColors).toHaveLength(11);
+  });
+
+  it('works with empty string baseUrl', async () => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('.3mf')) {
+        return Promise.resolve({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(mockModelBuffer),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(mockConfigText),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await fetchSample(SAMPLES[0], '');
+
+    expect(mockFetch).toHaveBeenCalledWith(SAMPLES[0].modelPath);
+    expect(mockFetch).toHaveBeenCalledWith(SAMPLES[0].configPath);
+  });
+
+  it('ignores filament_colors with invalid hex format', async () => {
+    const configBadHex = { ...sampleConfig, filament_colors: ['#808080', 'not-a-color', '#3498DB'] };
+
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('.3mf')) {
+        return Promise.resolve({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(mockModelBuffer),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify(configBadHex)),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const data = await fetchSample(SAMPLES[0], '/');
+    expect(data.filamentColors).toBeUndefined();
+  });
+
+  it('preserves original error as cause on malformed JSON', async () => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (url.endsWith('.3mf')) {
+        return Promise.resolve({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(mockModelBuffer),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve('not valid json {{{'),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    try {
+      await fetchSample(SAMPLES[0], '/');
+      expect.fail('Expected an error');
+    } catch (e) {
+      expect(e).toBeInstanceOf(Error);
+      expect((e as Error).cause).toBeInstanceOf(SyntaxError);
+    }
+  });
 });
