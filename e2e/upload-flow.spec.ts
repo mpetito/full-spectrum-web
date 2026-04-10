@@ -13,8 +13,8 @@ test.describe('Upload flow', () => {
         const fileInput = page.locator('input[type="file"][accept=".3mf,.stl"]');
         await fileInput.setInputFiles(FIXTURE);
 
-        // File name should appear
-        await expect(page.getByText('cube.3mf')).toBeVisible({
+        // File name should appear (stem without extension)
+        await expect(page.getByText('cube')).toBeVisible({
             timeout: 10000,
         });
 

@@ -118,7 +118,7 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
 
         {error && (
           <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3">
-            {t('samples.error')}
+            {t('samples.error')}: {error}
           </p>
         )}
 
