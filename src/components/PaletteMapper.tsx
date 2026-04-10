@@ -1,20 +1,27 @@
-import { useTranslation } from 'react-i18next';
-import type { ColorMapping, Palette, Dither3DConfig } from '../lib/config';
-import { useAppState, useAppDispatch } from '../state/AppContext';
-import { CyclicEditor } from './CyclicEditor';
-import { GradientEditor } from './GradientEditor';
-import { ConfigImportButton } from './ConfigImportExport';
+import { useTranslation } from "react-i18next";
+import type { ColorMapping, Palette, Dither3DConfig } from "../lib/config";
+import { getPaletteTypes } from "../lib/palette";
+import { useAppState, useAppDispatch } from "../state/AppContext";
+import { CyclicEditor } from "./CyclicEditor";
+import { GradientEditor } from "./GradientEditor";
+import { ConfigImportButton } from "./ConfigImportExport";
 
-type PaletteType = 'none' | 'cyclic' | 'gradient';
+type PaletteType = "none" | "cyclic" | "gradient";
 
 function paletteTypeOf(mapping: ColorMapping | undefined): PaletteType {
-  if (!mapping) return 'none';
+  if (!mapping) return "none";
   return mapping.outputPalette.type;
 }
 
-function defaultPalette(type: 'cyclic' | 'gradient'): Palette {
-  if (type === 'cyclic') return { type: 'cyclic', pattern: [1, 2] };
-  return { type: 'gradient', stops: [{ t: 0, filament: 1 }, { t: 1, filament: 2 }] };
+function defaultPalette(type: "cyclic" | "gradient"): Palette {
+  if (type === "cyclic") return { type: "cyclic", pattern: [1, 2] };
+  return {
+    type: "gradient",
+    stops: [
+      { t: 0, filament: 1 },
+      { t: 1, filament: 2 },
+    ],
+  };
 }
 
 export function PaletteMapper() {
@@ -26,11 +33,11 @@ export function PaletteMapper() {
 
   const dispatchMappings = (next: ColorMapping[]) => {
     const updated: Dither3DConfig = { ...config, colorMappings: next };
-    dispatch({ type: 'UPDATE_CONFIG', config: updated });
+    dispatch({ type: "UPDATE_CONFIG", config: updated });
   };
 
   const setType = (index: number, ptype: PaletteType) => {
-    if (ptype === 'none') {
+    if (ptype === "none") {
       dispatchMappings(mappings.filter((_, i) => i !== index));
     } else {
       const next = [...mappings];
@@ -57,7 +64,10 @@ export function PaletteMapper() {
     let next = 1;
     while (used.has(next) && next <= maxFil) next++;
     if (next > maxFil) return;
-    dispatchMappings([...mappings, { inputFilament: next, outputPalette: defaultPalette('cyclic') }]);
+    dispatchMappings([
+      ...mappings,
+      { inputFilament: next, outputPalette: defaultPalette("cyclic") },
+    ]);
   };
 
   const removeMapping = (index: number) => {
@@ -68,7 +78,7 @@ export function PaletteMapper() {
     <section>
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          {t('paletteMapper.heading')}
+          {t("paletteMapper.heading")}
         </h2>
         <ConfigImportButton />
       </div>
@@ -84,23 +94,33 @@ export function PaletteMapper() {
               <div className="flex items-center gap-2">
                 <span
                   className="w-4 h-4 rounded-full inline-block border border-gray-300 dark:border-gray-600"
-                  style={{ backgroundColor: filamentColors[mapping.inputFilament] ?? '#808080' }}
+                  style={{
+                    backgroundColor:
+                      filamentColors[mapping.inputFilament] ?? "#808080",
+                  }}
                 />
                 <label className="text-sm font-medium flex items-center gap-1">
-                  {t('paletteMapper.inputLabel')}
+                  {t("paletteMapper.inputLabel")}
                   <select
                     value={mapping.inputFilament}
-                    onChange={(e) => setInputFilament(i, Number(e.target.value))}
+                    onChange={(e) =>
+                      setInputFilament(i, Number(e.target.value))
+                    }
                     className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1 py-0.5 text-xs ml-1"
                   >
-                    {Array.from({ length: filamentColors.length - 1 }, (_, n) => n + 1).map((n) => (
+                    {Array.from(
+                      { length: filamentColors.length - 1 },
+                      (_, n) => n + 1,
+                    ).map((n) => (
                       <option key={n} value={n}>
                         {n}
                       </option>
                     ))}
                     {mapping.inputFilament >= filamentColors.length && (
                       <option value={mapping.inputFilament}>
-                        {t('paletteMapper.filamentRemoved', { index: mapping.inputFilament })}
+                        {t("paletteMapper.filamentRemoved", {
+                          index: mapping.inputFilament,
+                        })}
                       </option>
                     )}
                   </select>
@@ -109,7 +129,7 @@ export function PaletteMapper() {
               <button
                 onClick={() => removeMapping(i)}
                 className="text-gray-400 hover:text-red-500 text-xs"
-                title={t('paletteMapper.removeMappingTooltip')}
+                title={t("paletteMapper.removeMappingTooltip")}
               >
                 ✕
               </button>
@@ -121,21 +141,30 @@ export function PaletteMapper() {
               onChange={(e) => setType(i, e.target.value as PaletteType)}
               className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
             >
-              <option value="cyclic">{t('paletteMapper.typeCyclic')}</option>
-              <option value="gradient">{t('paletteMapper.typeGradient')}</option>
+              {getPaletteTypes().map((pt) => (
+                <option key={pt} value={pt}>
+                  {t(
+                    `paletteMapper.type${pt.charAt(0).toUpperCase() + pt.slice(1)}`,
+                  )}
+                </option>
+              ))}
             </select>
 
             {/* Palette editor */}
-            {mapping.outputPalette.type === 'cyclic' && (
+            {mapping.outputPalette.type === "cyclic" && (
               <CyclicEditor
                 pattern={[...mapping.outputPalette.pattern]}
-                onChange={(pattern) => updatePalette(i, { type: 'cyclic', pattern })}
+                onChange={(pattern) =>
+                  updatePalette(i, { type: "cyclic", pattern })
+                }
               />
             )}
-            {mapping.outputPalette.type === 'gradient' && (
+            {mapping.outputPalette.type === "gradient" && (
               <GradientEditor
                 stops={mapping.outputPalette.stops.map((s) => ({ ...s }))}
-                onChange={(stops) => updatePalette(i, { type: 'gradient', stops })}
+                onChange={(stops) =>
+                  updatePalette(i, { type: "gradient", stops })
+                }
               />
             )}
           </div>
@@ -147,7 +176,7 @@ export function PaletteMapper() {
           onClick={addMapping}
           className="mt-2 w-full rounded border border-dashed border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-500 hover:text-indigo-600 hover:border-indigo-400"
         >
-          {t('paletteMapper.addMapping')}
+          {t("paletteMapper.addMapping")}
         </button>
       )}
     </section>

@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeCentroidsZ,
-  computeFaceLayers,
+  computeGlobalFaceLayers,
   computeRegionLayers,
   clusterFacesByFilament,
   type MeshData,
@@ -47,10 +47,10 @@ describe('computeCentroidsZ', () => {
   });
 });
 
-describe('computeFaceLayers', () => {
+describe('computeGlobalFaceLayers', () => {
   it('assigns distinct layers with layerHeight=0.5', () => {
     const mesh = makeCubeMesh();
-    const layers = computeFaceLayers(mesh, 0.5);
+    const layers = computeGlobalFaceLayers(mesh, 0.5);
     expect(layers.length).toBe(12);
 
     // Bottom faces (centroid z≈0) → layer 0

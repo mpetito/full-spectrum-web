@@ -1,6 +1,7 @@
 /** JSON palette configuration loading and validation. */
 
 import { MAX_BISECTION_DEPTH, MAX_FILAMENTS } from './encoding';
+import { getPaletteStrategy } from './palette';
 
 export class ConfigError extends Error {
     constructor(message: string) {
@@ -42,28 +43,14 @@ export interface Dither3DConfig {
 
 function parsePalette(data: Record<string, unknown>): Palette {
     const paletteType = data['type'];
-    if (paletteType === 'cyclic') {
-        const pattern = data['pattern'];
-        if (!Array.isArray(pattern) || pattern.length === 0) {
-            throw new ConfigError("Cyclic palette requires non-empty 'pattern' list");
-        }
-        return { type: 'cyclic', pattern: pattern as number[] };
-    } else if (paletteType === 'gradient') {
-        const rawStops = data['stops'];
-        if (!Array.isArray(rawStops) || rawStops.length < 2) {
-            throw new ConfigError('Gradient palette requires at least 2 stops');
-        }
-        const stops: GradientStop[] = [];
-        for (let i = 0; i < rawStops.length; i++) {
-            const s = rawStops[i];
-            if (!Array.isArray(s) || s.length !== 2) {
-                throw new ConfigError(`Gradient stop ${i} must be in format [t, filament]`);
-            }
-            stops.push({ t: s[0] as number, filament: s[1] as number });
-        }
-        return { type: 'gradient', stops };
-    } else {
-        throw new ConfigError(`Unknown palette type: '${paletteType}'`);
+    if (typeof paletteType !== 'string') {
+        throw new ConfigError("Palette requires a 'type' field");
+    }
+    try {
+        return getPaletteStrategy(paletteType).parse(data);
+    } catch (e) {
+        if (e instanceof Error) throw new ConfigError(e.message);
+        throw e;
     }
 }
 
@@ -149,6 +136,15 @@ export function validateConfig(config: Dither3DConfig): string[] {
         );
     }
 
+    // Warn if bisection depth may be too shallow for the chosen layer height
+    const minUsefulDepth = Math.ceil(Math.log2(config.layerHeightMm / 0.001));
+    if (config.maxSplitDepth < minUsefulDepth) {
+        warnings.push(
+            `Split depth ${config.maxSplitDepth} may be too shallow for ` +
+            `${config.layerHeightMm}mm layers (recommended ≥ ${minUsefulDepth})`,
+        );
+    }
+
     if (!['prusaslicer', 'bambu', 'both'].includes(config.targetFormat)) {
         warnings.push(
             `target_format '${config.targetFormat}' not recognized; expected 'prusaslicer', 'bambu', or 'both'`,
@@ -162,39 +158,29 @@ export function validateConfig(config: Dither3DConfig): string[] {
                 `color_mappings[${i}]: input_filament ${cm.inputFilament} outside range [1, ${MAX_FILAMENTS}]`,
             );
         }
-
-        const palette = cm.outputPalette;
-        if (palette.type === 'cyclic') {
-            for (let j = 0; j < palette.pattern.length; j++) {
-                if (palette.pattern[j] < 1 || palette.pattern[j] > MAX_FILAMENTS) {
-                    throw new ConfigError(
-                        `color_mappings[${i}].pattern[${j}]: filament ${palette.pattern[j]} outside range [1, ${MAX_FILAMENTS}]`,
-                    );
-                }
-            }
-        } else if (palette.type === 'gradient') {
-            for (let j = 1; j < palette.stops.length; j++) {
-                if (palette.stops[j].t < palette.stops[j - 1].t) {
-                    throw new ConfigError(`color_mappings[${i}]: gradient stops not sorted by t`);
-                }
-            }
-            for (let j = 0; j < palette.stops.length; j++) {
-                const stop = palette.stops[j];
-                if (stop.t < 0.0 || stop.t > 1.0) {
-                    throw new ConfigError(
-                        `color_mappings[${i}].stops[${j}]: t=${stop.t} outside [0.0, 1.0]`,
-                    );
-                }
-                if (stop.filament < 1 || stop.filament > MAX_FILAMENTS) {
-                    throw new ConfigError(
-                        `color_mappings[${i}].stops[${j}]: filament ${stop.filament} outside range [1, ${MAX_FILAMENTS}]`,
-                    );
-                }
-            }
+        try {
+            getPaletteStrategy(cm.outputPalette.type).validate(cm.outputPalette, i);
+        } catch (e) {
+            if (e instanceof Error) throw new ConfigError(e.message);
+            throw e;
         }
     }
 
     return warnings;
+}
+
+export function configToJson(config: Dither3DConfig): Record<string, unknown> {
+    return {
+        layer_height_mm: config.layerHeightMm,
+        target_format: config.targetFormat,
+        color_mappings: config.colorMappings.map((cm) => ({
+            input_filament: cm.inputFilament,
+            output_palette: getPaletteStrategy(cm.outputPalette.type).toJson(cm.outputPalette),
+        })),
+        boundary_split: config.boundarySplit,
+        max_split_depth: config.maxSplitDepth,
+        boundary_strategy: config.boundaryStrategy,
+    };
 }
 
 export function defaultConfig(

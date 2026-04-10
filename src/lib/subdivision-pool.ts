@@ -1,13 +1,15 @@
 /** Worker pool manager for parallel bisection encoding. */
 
 import type { MeshData } from './mesh';
-import { computeCentroidsZ, computeFaceLayers, LAYER_EPSILON_FACTOR } from './mesh';
-import { findBoundaryFaces, encodeBoundaryFaces } from './subdivision';
+import { MIN_ABSOLUTE_EPSILON } from '../constants';
+import { LAYER_EPSILON_FACTOR } from './mesh';
+import { encodeBoundaryFaces, prepareBoundaryContext } from './subdivision';
 
 export interface PoolOptions {
     maxDepth?: number;
     progressCallback?: (done: number, total: number) => void;
-    layerFilamentMap?: Map<number, number>;
+    clusterLayerMaps: Uint8Array[];
+    faceClusterIndex: Uint16Array;
     signal?: AbortSignal;
 }
 
@@ -21,48 +23,17 @@ export async function encodeBoundaryFacesParallel(
     mesh: MeshData,
     faceFilaments: Uint32Array,
     layerHeight: number,
-    options?: PoolOptions,
+    options: PoolOptions,
 ): Promise<Map<number, string>> {
-    const maxDepth = options?.maxDepth ?? 9;
-    const progressCallback = options?.progressCallback;
+    const maxDepth = options.maxDepth ?? 9;
+    const progressCallback = options.progressCallback;
 
-    // ---- Shared setup (mirrors serial encodeBoundaryFaces) ----
+    // ---- Shared setup (via prepareBoundaryContext) ----
 
-    const centroidsZ = computeCentroidsZ(mesh);
-    let globalZMin = Infinity;
-    for (let i = 0; i < centroidsZ.length; i++) {
-        if (centroidsZ[i] < globalZMin) globalZMin = centroidsZ[i];
-    }
+    const { globalZMin, boundaryMask } =
+        prepareBoundaryContext(mesh, layerHeight);
 
-    const layerIndices = computeFaceLayers(mesh, layerHeight);
-
-    // Build layer→filament map if not provided
-    let layerFilamentMap = options?.layerFilamentMap;
-    if (!layerFilamentMap) {
-        layerFilamentMap = new Map<number, number>();
-        const layerBuckets = new Map<number, Map<number, number>>();
-        for (let i = 0; i < mesh.faceCount; i++) {
-            const layer = layerIndices[i];
-            const fil = faceFilaments[i];
-            let counts = layerBuckets.get(layer);
-            if (!counts) {
-                counts = new Map<number, number>();
-                layerBuckets.set(layer, counts);
-            }
-            counts.set(fil, (counts.get(fil) ?? 0) + 1);
-        }
-        layerBuckets.forEach((counts, layer) => {
-            let bestFil = 0;
-            let bestCount = -1;
-            counts.forEach((count, fil) => {
-                if (count > bestCount) {
-                    bestCount = count;
-                    bestFil = fil;
-                }
-            });
-            layerFilamentMap!.set(layer, bestFil);
-        });
-    }
+    const { clusterLayerMaps, faceClusterIndex } = options;
 
     // Default filament = overall mode
     const overallCounts = new Map<number, number>();
@@ -79,8 +50,7 @@ export async function encodeBoundaryFacesParallel(
         }
     });
 
-    // Identify boundary faces
-    const boundaryMask = findBoundaryFaces(mesh, layerIndices, layerHeight, globalZMin);
+    // Identify boundary faces (from prepareBoundaryContext)
     const boundaryIndices: number[] = [];
     for (let i = 0; i < mesh.faceCount; i++) {
         if (boundaryMask[i]) boundaryIndices.push(i);
@@ -96,14 +66,18 @@ export async function encodeBoundaryFacesParallel(
         return encodeBoundaryFaces(mesh, faceFilaments, layerHeight, {
             maxDepth,
             progressCallback,
-            layerFilamentMap,
+            clusterLayerMaps,
+            faceClusterIndex,
         });
     }
 
     // ---- Parallel path ----
 
-    const epsilon = layerHeight * LAYER_EPSILON_FACTOR;
-    const filamentEntries: [number, number][] = [...layerFilamentMap.entries()];
+    const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
+
+    // Convert cluster data for worker transfer (plain arrays)
+    const clusterMapsForWorker = clusterLayerMaps.map(m => Array.from(m));
+    const faceClusterArray = Array.from(faceClusterIndex);
 
     // Split boundary indices into roughly equal chunks
     const chunkSize = Math.ceil(boundaryIndices.length / workerCount);
@@ -117,7 +91,7 @@ export async function encodeBoundaryFacesParallel(
 
     const merged = new Map<number, string>();
 
-    const signal = options?.signal;
+    const signal = options.signal;
     const workers: Worker[] = [];
     let aborted = false;
 
@@ -168,7 +142,8 @@ export async function encodeBoundaryFacesParallel(
                 boundaryIndices: chunk,
                 layerHeight,
                 globalZMin,
-                filamentByLayer: filamentEntries,
+                clusterLayerMaps: clusterMapsForWorker,
+                faceClusterIndex: faceClusterArray,
                 defaultFilament,
                 maxDepth,
                 epsilon,

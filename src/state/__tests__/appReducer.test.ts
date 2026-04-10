@@ -18,10 +18,12 @@ const mockMeshData: ThreeMFData = {
 };
 
 const mockLayerColorData: LayerColorData = {
-    layerFilamentMap: new Map([[0, 1]]),
+    clusterLayerMaps: [new Uint8Array([1])],
+    faceClusterIndex: new Uint16Array([0]),
     zMin: 0,
     layerHeight: 0.1,
     totalLayers: 1,
+    clusterCount: 1,
 };
 
 const mockResult: PipelineResult = {

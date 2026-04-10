@@ -1,6 +1,6 @@
 /** Tests for config loading and validation. */
 import { describe, it, expect } from 'vitest';
-import { loadConfigFromJson, validateConfig, defaultConfig, ConfigError, type Dither3DConfig } from '../config';
+import { loadConfigFromJson, validateConfig, defaultConfig, configToJson, ConfigError, type Dither3DConfig } from '../config';
 
 const VALID_CYCLIC_JSON = JSON.stringify({
     layer_height_mm: 0.1,
@@ -203,6 +203,18 @@ describe('validateConfig', () => {
             loadConfigFromJson(JSON.stringify({ layer_height_mm: 0.01, color_mappings: [] })),
         ).toThrow('outside valid range');
     });
+
+    it('warns when split depth is too shallow for layer height', () => {
+        const cfg = testConfig({ layerHeightMm: 0.04, maxSplitDepth: 3 });
+        const warnings = validateConfig(cfg);
+        expect(warnings.some((w) => w.includes('too shallow'))).toBe(true);
+    });
+
+    it('does not warn when split depth is adequate', () => {
+        const cfg = testConfig({ layerHeightMm: 0.04, maxSplitDepth: 9 });
+        const warnings = validateConfig(cfg);
+        expect(warnings.every((w) => !w.includes('too shallow'))).toBe(true);
+    });
 });
 
 describe('defaultConfig', () => {
@@ -221,5 +233,113 @@ describe('defaultConfig', () => {
         const cfg = defaultConfig(0.1);
         const warnings = validateConfig(cfg);
         expect(warnings).toEqual([]);
+    });
+});
+
+describe('configToJson round-trip', () => {
+    it('preserves cyclic config through round-trip', () => {
+        const original: Dither3DConfig = {
+            layerHeightMm: 0.1,
+            targetFormat: 'both',
+            colorMappings: [
+                { inputFilament: 1, outputPalette: { type: 'cyclic', pattern: [1, 2, 3] } },
+            ],
+            boundarySplit: true,
+            maxSplitDepth: 9,
+            boundaryStrategy: 'bisection',
+        };
+        const json = JSON.stringify(configToJson(original));
+        const restored = loadConfigFromJson(json);
+        expect(restored.layerHeightMm).toBe(original.layerHeightMm);
+        expect(restored.targetFormat).toBe(original.targetFormat);
+        expect(restored.boundarySplit).toBe(original.boundarySplit);
+        expect(restored.maxSplitDepth).toBe(original.maxSplitDepth);
+        expect(restored.boundaryStrategy).toBe(original.boundaryStrategy);
+        expect(restored.colorMappings).toHaveLength(1);
+        expect(restored.colorMappings[0].inputFilament).toBe(1);
+        expect(restored.colorMappings[0].outputPalette).toEqual({ type: 'cyclic', pattern: [1, 2, 3] });
+    });
+
+    it('preserves gradient config through round-trip', () => {
+        const original: Dither3DConfig = {
+            layerHeightMm: 0.08,
+            targetFormat: 'prusaslicer',
+            colorMappings: [
+                {
+                    inputFilament: 2,
+                    outputPalette: {
+                        type: 'gradient',
+                        stops: [{ t: 0.0, filament: 1 }, { t: 1.0, filament: 3 }],
+                    },
+                },
+            ],
+            boundarySplit: false,
+            maxSplitDepth: 5,
+            boundaryStrategy: 'bisection',
+        };
+        const json = JSON.stringify(configToJson(original));
+        const restored = loadConfigFromJson(json);
+        expect(restored.layerHeightMm).toBe(original.layerHeightMm);
+        expect(restored.targetFormat).toBe(original.targetFormat);
+        expect(restored.boundarySplit).toBe(original.boundarySplit);
+        expect(restored.maxSplitDepth).toBe(original.maxSplitDepth);
+        expect(restored.colorMappings[0].inputFilament).toBe(2);
+        const palette = restored.colorMappings[0].outputPalette;
+        expect(palette.type).toBe('gradient');
+        if (palette.type === 'gradient') {
+            expect(palette.stops).toHaveLength(2);
+            expect(palette.stops[0]).toEqual({ t: 0.0, filament: 1 });
+            expect(palette.stops[1]).toEqual({ t: 1.0, filament: 3 });
+        }
+    });
+});
+
+describe('palette parse validation', () => {
+    it('rejects cyclic pattern with non-integer elements', () => {
+        const json = JSON.stringify({
+            layer_height_mm: 0.1,
+            color_mappings: [{
+                input_filament: 1,
+                output_palette: { type: 'cyclic', pattern: [1, 'two', 3] },
+            }],
+        });
+        expect(() => loadConfigFromJson(json)).toThrow(ConfigError);
+        expect(() => loadConfigFromJson(json)).toThrow(/expected integer/);
+    });
+
+    it('rejects cyclic pattern with float elements', () => {
+        const json = JSON.stringify({
+            layer_height_mm: 0.1,
+            color_mappings: [{
+                input_filament: 1,
+                output_palette: { type: 'cyclic', pattern: [1, 2.5] },
+            }],
+        });
+        expect(() => loadConfigFromJson(json)).toThrow(ConfigError);
+        expect(() => loadConfigFromJson(json)).toThrow(/expected integer/);
+    });
+
+    it('rejects gradient stop with non-numeric t', () => {
+        const json = JSON.stringify({
+            layer_height_mm: 0.1,
+            color_mappings: [{
+                input_filament: 1,
+                output_palette: { type: 'gradient', stops: [['start', 1], [1.0, 2]] },
+            }],
+        });
+        expect(() => loadConfigFromJson(json)).toThrow(ConfigError);
+        expect(() => loadConfigFromJson(json)).toThrow(/t must be a number/);
+    });
+
+    it('rejects gradient stop with non-integer filament', () => {
+        const json = JSON.stringify({
+            layer_height_mm: 0.1,
+            color_mappings: [{
+                input_filament: 1,
+                output_palette: { type: 'gradient', stops: [[0.0, 1.5], [1.0, 2]] },
+            }],
+        });
+        expect(() => loadConfigFromJson(json)).toThrow(ConfigError);
+        expect(() => loadConfigFromJson(json)).toThrow(/filament must be an integer/);
     });
 });

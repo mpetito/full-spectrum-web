@@ -10,26 +10,31 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(n >> 16) / 255, ((n >> 8) & 0xff) / 255, (n & 0xff) / 255];
 }
 
-/** Build a 1D DataTexture mapping layer index → RGB from layer color data. */
-function buildLayerTexture(
+/** Build a 2D DataTexture (width=layers, height=clusters) mapping (layer, cluster) → RGB. */
+function buildClusterLayerTexture(
   layerColorData: LayerColorData,
   filamentColors: readonly string[],
 ): THREE.DataTexture {
-  const { layerFilamentMap, totalLayers } = layerColorData;
-  const width = Math.max(totalLayers, 1);
-  const data = new Uint8Array(width * 4); // RGBA
+  const { clusterLayerMaps, totalLayers, clusterCount } = layerColorData;
+  const w = Math.max(totalLayers, 1);
+  const h = Math.max(clusterCount, 1);
+  const data = new Uint8Array(w * h * 4);
 
-  for (let i = 0; i < width; i++) {
-    const filament = layerFilamentMap.get(i) ?? 0;
-    const hex = filamentColors[filament] ?? filamentColors[0];
-    const [r, g, b] = hexToRgb(hex);
-    data[i * 4] = Math.round(r * 255);
-    data[i * 4 + 1] = Math.round(g * 255);
-    data[i * 4 + 2] = Math.round(b * 255);
-    data[i * 4 + 3] = 255;
+  for (let ci = 0; ci < h; ci++) {
+    const map = clusterLayerMaps[ci];
+    for (let li = 0; li < w; li++) {
+      const filament = map ? (li < map.length ? map[li] : 0) : 0;
+      const hex = filamentColors[filament] ?? filamentColors[0];
+      const [r, g, b] = hexToRgb(hex);
+      const idx = (ci * w + li) * 4;
+      data[idx] = Math.round(r * 255);
+      data[idx + 1] = Math.round(g * 255);
+      data[idx + 2] = Math.round(b * 255);
+      data[idx + 3] = 255;
+    }
   }
 
-  const tex = new THREE.DataTexture(data, width, 1, THREE.RGBAFormat);
+  const tex = new THREE.DataTexture(data, w, h, THREE.RGBAFormat);
   tex.minFilter = THREE.NearestFilter;
   tex.magFilter = THREE.NearestFilter;
   tex.needsUpdate = true;
@@ -37,11 +42,14 @@ function buildLayerTexture(
 }
 
 const LAYER_VERTEX_SHADER = /* glsl */ `
+  attribute float aClusterIndex;
   varying float vModelZ;
   varying vec3 vWorldNormal;
+  varying float vClusterIndex;
 
   void main() {
     vModelZ = position.z;
+    vClusterIndex = aClusterIndex;
     mat3 worldNormalMatrix = transpose(inverse(mat3(modelMatrix)));
     vWorldNormal = normalize(worldNormalMatrix * normal);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -52,19 +60,22 @@ const LAYER_FRAGMENT_SHADER = /* glsl */ `
   uniform float uZMin;
   uniform float uLayerHeight;
   uniform float uTotalLayers;
+  uniform float uClusterCount;
   uniform sampler2D uLayerColorTex;
 
   varying float vModelZ;
   varying vec3 vWorldNormal;
+  varying float vClusterIndex;
 
   void main() {
     float epsilon = uLayerHeight * 0.001;
     float layerF = floor((vModelZ - uZMin + epsilon) / uLayerHeight);
     layerF = clamp(layerF, 0.0, uTotalLayers - 1.0);
 
-    // Sample 1D texture: center of texel
+    // Sample 2D texture: x=layer, y=cluster (center of texels)
     float u = (layerF + 0.5) / uTotalLayers;
-    vec3 layerColor = texture2D(uLayerColorTex, vec2(u, 0.5)).rgb;
+    float v = (vClusterIndex + 0.5) / uClusterCount;
+    vec3 layerColor = texture2D(uLayerColorTex, vec2(u, v)).rgb;
 
     // Basic lighting: ambient (0.5) + directional diffuse (1.0)
     vec3 normal = normalize(vWorldNormal);
@@ -77,7 +88,8 @@ const LAYER_FRAGMENT_SHADER = /* glsl */ `
 `;
 
 function MeshGeometry() {
-  const { meshData, layerColorData, filamentColors, previewMode } = useAppState();
+  const { meshData, layerColorData, filamentColors, previewMode } =
+    useAppState();
   const { invalidate } = useThree();
 
   const geometry = useMemo(() => {
@@ -135,6 +147,28 @@ function MeshGeometry() {
     invalidate();
   }, [geometry, meshData, filamentColors, invalidate]);
 
+  // Set per-vertex cluster index attribute for the layer shader
+  useEffect(() => {
+    if (!geometry || !layerColorData?.faceClusterIndex || !meshData) return;
+
+    const { faceClusterIndex } = layerColorData;
+    const { faceCount } = meshData;
+    const clusterAttr = new Float32Array(faceCount * 3);
+
+    for (let f = 0; f < faceCount; f++) {
+      const ci = faceClusterIndex[f];
+      clusterAttr[f * 3] = ci;
+      clusterAttr[f * 3 + 1] = ci;
+      clusterAttr[f * 3 + 2] = ci;
+    }
+
+    geometry.setAttribute(
+      "aClusterIndex",
+      new THREE.BufferAttribute(clusterAttr, 1),
+    );
+    invalidate();
+  }, [geometry, layerColorData, meshData, invalidate]);
+
   // Invalidate on preview mode switch without re-running O(faceCount) color fill
   useEffect(() => {
     invalidate();
@@ -149,7 +183,7 @@ function MeshGeometry() {
       return null;
     }
 
-    const tex = buildLayerTexture(layerColorData, filamentColors);
+    const tex = buildClusterLayerTexture(layerColorData, filamentColors);
 
     return new THREE.ShaderMaterial({
       vertexShader: LAYER_VERTEX_SHADER,
@@ -158,6 +192,7 @@ function MeshGeometry() {
         uZMin: { value: layerColorData.zMin },
         uLayerHeight: { value: layerColorData.layerHeight },
         uTotalLayers: { value: layerColorData.totalLayers },
+        uClusterCount: { value: layerColorData.clusterCount },
         uLayerColorTex: { value: tex },
       },
     });
@@ -187,7 +222,7 @@ function MeshGeometry() {
 
   if (!geometry) return null;
 
-  if (previewMode === 'output' && shaderMaterial) {
+  if (previewMode === "output" && shaderMaterial) {
     return <mesh geometry={geometry} material={shaderMaterial} />;
   }
 
@@ -206,9 +241,15 @@ function BuildPlateGrid() {
   const gridHelper = useMemo(() => {
     if (!meshData) return null;
     const { vertices } = meshData;
-    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity, zMin = Infinity;
+    let xMin = Infinity,
+      xMax = -Infinity,
+      yMin = Infinity,
+      yMax = -Infinity,
+      zMin = Infinity;
     for (let i = 0; i < vertices.length; i += 3) {
-      const x = vertices[i], y = vertices[i + 1], z = vertices[i + 2];
+      const x = vertices[i],
+        y = vertices[i + 1],
+        z = vertices[i + 2];
       if (x < xMin) xMin = x;
       if (x > xMax) xMax = x;
       if (y < yMin) yMin = y;

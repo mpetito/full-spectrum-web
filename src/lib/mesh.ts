@@ -40,7 +40,7 @@ export function computeCentroidsZ(mesh: MeshData): Float64Array {
  * Assign each face to a Z-layer based on its centroid Z coordinate.
  * Returns Uint32Array of 0-based layer indices.
  */
-export function computeFaceLayers(mesh: MeshData, layerHeight: number): Uint32Array {
+export function computeGlobalFaceLayers(mesh: MeshData, layerHeight: number): Uint32Array {
   const centroidsZ = computeCentroidsZ(mesh);
   let zMin = Infinity;
   for (let i = 0; i < centroidsZ.length; i++) {

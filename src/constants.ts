@@ -1,5 +1,8 @@
 /** Shared constants for the Dither3D UI. */
 
+/** Minimum absolute epsilon (100nm floor) to prevent numerical degeneracy at small layer heights. */
+export const MIN_ABSOLUTE_EPSILON = 0.0001;
+
 export const FILAMENT_COLORS = [
   '#808080', // 0: default/unassigned (gray)
   '#E74C3C', // 1: red

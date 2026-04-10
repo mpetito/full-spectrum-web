@@ -18,14 +18,14 @@ npm run build          # TypeScript type-check + Vite production build
 
 ### Layers
 
-| Directory          | Role                                                   |
-| ------------------ | ------------------------------------------------------ |
-| `src/lib/`         | Pure TypeScript processing library (uses DOM APIs for XML; needs polyfill for Node) |
-| `src/components/`  | React UI components (React 19 + Tailwind CSS v4)       |
-| `src/state/`       | App-wide React context (`AppContext.tsx`)               |
-| `src/hooks/`       | Custom React hooks (e.g. `useProcessing`)              |
-| `e2e/`             | Playwright end-to-end tests                            |
-| `specs/`           | Design specs and implementation plans (reference only)  |
+| Directory         | Role                                                                                |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `src/lib/`        | Pure TypeScript processing library (uses DOM APIs for XML; needs polyfill for Node) |
+| `src/components/` | React UI components (React 19 + Tailwind CSS v4)                                    |
+| `src/state/`      | App-wide React context (`AppContext.tsx`)                                           |
+| `src/hooks/`      | Custom React hooks (e.g. `useProcessing`)                                           |
+| `e2e/`            | Playwright end-to-end tests                                                         |
+| `specs/`          | Design specs and implementation plans (reference only)                              |
 
 ### Key Domain Concepts
 
@@ -35,6 +35,19 @@ npm run build          # TypeScript type-check + Vite production build
 - **Gradient palette** — Bresenham-style error accumulation mapping color stops at normalized heights (0.0–1.0) to discrete filament assignments
 - **Boundary subdivision** — Bisection of triangle faces that straddle layer boundaries
 - **Layer height** — Blending works at ≤ 0.12 mm; layer indexing is relative to region minimum Z: `floor((centroid_z - z_min + ε) / layer_height)`
+
+### Coloring Model — Z-Based, Not Per-Face
+
+Dither3D's core value is **sub-face color precision**. A single input triangle may span
+many print layers, so the bisection encoder recursively subdivides it into sub-triangles
+that each receive the correct filament for their Z height. The preview shader mirrors this:
+every **fragment** independently computes its layer from interpolated model-space Z and
+samples a layer→color texture, producing pixel-accurate horizontal bands.
+
+**Per-face or per-vertex coloring is fundamentally wrong for this project** — it would
+collapse each face to a single color, destroying the sub-face layer bands that are the
+entire purpose of the tool. Always use the Z-based shader for output preview. See
+[`src/lib/AGENTS.md`](src/lib/AGENTS.md) for the detailed encoding pipeline.
 
 ### Module Boundaries
 
@@ -57,6 +70,7 @@ npm run build          # TypeScript type-check + Vite production build
 
 ## Do Not
 
+- ❌ Use per-face or per-vertex colors for output preview — the Z-based shader is essential; each face spans multiple layers and must show sub-face color bands (see [Coloring Model](#coloring-model--z-based-not-per-face))
 - ❌ Import React APIs in `src/lib/` — it must stay portable (DOM APIs for XML parsing are OK)
 - ❌ Use `any` types — add proper type annotations
 - ❌ Modify files under `coverage/`, `playwright-report/`, or `test-results/` — these are generated

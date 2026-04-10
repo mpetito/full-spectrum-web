@@ -1,28 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAppState, useAppDispatch } from '../state/AppContext';
 import { processAsync } from '../lib/pipeline';
-import type { Dither3DConfig } from '../lib/config';
-
-function configToJson(config: Dither3DConfig): Record<string, unknown> {
-  return {
-    layer_height_mm: config.layerHeightMm,
-    target_format: config.targetFormat,
-    color_mappings: config.colorMappings.map(cm => ({
-      input_filament: cm.inputFilament,
-      output_palette: cm.outputPalette.type === 'cyclic'
-        ? { type: 'cyclic', pattern: [...cm.outputPalette.pattern] }
-        : {
-            type: 'gradient',
-            stops: (cm.outputPalette as { stops: readonly { t: number; filament: number }[] }).stops.map(
-              s => [s.t, s.filament],
-            ),
-          },
-    })),
-    boundary_split: config.boundarySplit,
-    max_split_depth: config.maxSplitDepth,
-    boundary_strategy: config.boundaryStrategy,
-  };
-}
+import { configToJson } from '../lib/config';
 
 export function useProcessing() {
     const { rawFileData, config, meshData, status, filamentColors } = useAppState();
@@ -54,11 +33,11 @@ export function useProcessing() {
             try {
                 const [result, outputBytes, layerColorData] = await processAsync(
                     rawFileData, config, {
-                      signal: controller.signal,
-                      progressCallback,
-                      filamentColors,
-                      pipelineConfig: configToJson(config),
-                    },
+                    signal: controller.signal,
+                    progressCallback,
+                    filamentColors,
+                    pipelineConfig: configToJson(config),
+                },
                 );
                 if (outputBytes) {
                     dispatch({ type: 'PROCESS_SUCCESS', result, outputBytes, layerColorData });

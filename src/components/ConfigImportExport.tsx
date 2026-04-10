@@ -1,43 +1,19 @@
-import { useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAppState, useAppDispatch } from '../state/AppContext';
-import { loadConfigFromJson, type Dither3DConfig } from '../lib/config';
-
-function configToJson(config: Dither3DConfig): string {
-  return JSON.stringify(
-    {
-      layer_height_mm: config.layerHeightMm,
-      target_format: config.targetFormat,
-      boundary_split: config.boundarySplit,
-      max_split_depth: config.maxSplitDepth,
-      boundary_strategy: config.boundaryStrategy,
-      color_mappings: config.colorMappings.map((cm) => ({
-        input_filament: cm.inputFilament,
-        output_palette:
-          cm.outputPalette.type === 'cyclic'
-            ? { type: 'cyclic', pattern: [...cm.outputPalette.pattern] }
-            : {
-                type: 'gradient',
-                stops: cm.outputPalette.stops.map((s) => [s.t, s.filament]),
-              },
-      })),
-    },
-    null,
-    2,
-  );
-}
+import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useAppState, useAppDispatch } from "../state/AppContext";
+import { configToJson, loadConfigFromJson } from "../lib/config";
 
 export function ConfigExportButton() {
   const { t } = useTranslation();
   const { config } = useAppState();
 
   const handleExport = () => {
-    const json = configToJson(config);
-    const blob = new Blob([json], { type: 'application/json' });
+    const json = JSON.stringify(configToJson(config), null, 2);
+    const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'dither3d.config.json';
+    a.download = "dither3d.config.json";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -47,7 +23,7 @@ export function ConfigExportButton() {
       onClick={handleExport}
       className="w-full px-3 py-1.5 rounded text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
     >
-      {t('configImportExport.exportButton')}
+      {t("configImportExport.exportButton")}
     </button>
   );
 }
@@ -69,12 +45,14 @@ export function ConfigImportButton() {
     try {
       const text = await file.text();
       const parsed = loadConfigFromJson(text);
-      dispatch({ type: 'UPDATE_CONFIG', config: parsed });
+      dispatch({ type: "UPDATE_CONFIG", config: parsed });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('configImportExport.parseError'));
+      setError(
+        err instanceof Error ? err.message : t("configImportExport.parseError"),
+      );
     }
     // Reset input so same file can be re-imported
-    e.target.value = '';
+    e.target.value = "";
   };
 
   return (
@@ -83,7 +61,7 @@ export function ConfigImportButton() {
         onClick={handleImport}
         className="px-2 py-0.5 rounded text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
-        {t('configImportExport.importButton')}
+        {t("configImportExport.importButton")}
       </button>
       <input
         ref={fileInputRef}
