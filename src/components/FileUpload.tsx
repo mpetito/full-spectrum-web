@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { useAppDispatch, useAppState } from '../state/AppContext';
 import { read3mf } from '../lib/threemf';
 import { loadConfigFromJson } from '../lib/config';
@@ -151,14 +151,13 @@ export function FileUpload() {
         <div className="text-center">
           <p className="text-sm font-medium" id="file-upload-hint">{t('fileUpload.dropHint')}</p>
           <p className="text-xs text-gray-500">
-            {t('fileUpload.browseHint')}{' '}
-            <button
-              type="button"
-              onClick={handleSampleOpen}
-              className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-            >
-              {t('fileUpload.trySample')}
-            </button>
+            <Trans i18nKey="fileUpload.browseHintWithSample">
+              click to browse or <button
+                type="button"
+                onClick={handleSampleOpen}
+                className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >try a sample</button>
+            </Trans>
           </p>
         </div>
       )}

@@ -11,8 +11,7 @@
     "loading": "Wird geladen…",
     "fileInfo": "{{count}} Flächen · klicken zum Ersetzen",
     "dropHint": "Eine .3mf-Datei hierher ziehen",
-    "browseHint": "klicken zum Durchsuchen",
-    "trySample": "oder ein Beispiel ausprobieren"
+    "browseHintWithSample": "klicken zum Durchsuchen oder <1>ein Beispiel ausprobieren</1>"
   },
   "filamentList": {
     "heading": "Filamente",

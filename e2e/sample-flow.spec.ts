@@ -5,7 +5,7 @@ test.describe('Sample gallery flow', () => {
         await page.goto('/');
 
         // The "try a sample" link should be visible in the empty upload state
-        const sampleLink = page.getByText('or try a sample');
+        const sampleLink = page.getByRole('button', { name: /try a sample/i });
         await expect(sampleLink).toBeVisible();
 
         // Click to open the sample picker dialog
@@ -28,7 +28,7 @@ test.describe('Sample gallery flow', () => {
     test('sample picker can be closed via close button', async ({ page }) => {
         await page.goto('/');
 
-        await page.getByText('or try a sample').click();
+        await page.getByRole('button', { name: /try a sample/i }).click();
         await expect(page.getByRole('heading', { name: /try a sample/i })).toBeVisible();
 
         // Close via the X button
@@ -41,7 +41,7 @@ test.describe('Sample gallery flow', () => {
     test('sample picker can be closed via Escape key', async ({ page }) => {
         await page.goto('/');
 
-        await page.getByText('or try a sample').click();
+        await page.getByRole('button', { name: /try a sample/i }).click();
         await expect(page.getByRole('heading', { name: /try a sample/i })).toBeVisible();
 
         // Press Escape

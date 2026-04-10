@@ -18,6 +18,7 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
   onCloseRef.current = onClose;
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -26,10 +27,12 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
     // Reset transient state each time the modal opens
     setError(null);
     setLoadingId(null);
+    cancelledRef.current = false;
 
     if (open && !dialog.open) {
       dialog.showModal();
     } else if (!open && dialog.open) {
+      cancelledRef.current = true;
       dialog.close();
     }
   }, [open]);
@@ -39,12 +42,17 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
     const dialog = dialogRef.current;
     if (!dialog) return;
     const handleCancel = (event: Event) => {
+      // Block Escape while a sample is loading
+      if (loadingId !== null) {
+        event.preventDefault();
+        return;
+      }
       event.preventDefault();
       onCloseRef.current();
     };
     dialog.addEventListener('cancel', handleCancel);
     return () => dialog.removeEventListener('cancel', handleCancel);
-  }, []);
+  }, [loadingId]);
 
   const handleLoad = useCallback(
     async (sample: SampleDefinition) => {
@@ -54,6 +62,7 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
 
       try {
         const data = await fetchSample(sample);
+        if (cancelledRef.current) return;
         const meshData = read3mf(data.modelBuffer, true);
 
         dispatch({ type: 'UPLOAD_SUCCESS', meshData, rawFileData: data.modelBuffer });
@@ -73,6 +82,7 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
 
         onClose();
       } catch (e) {
+        if (cancelledRef.current) return;
         const msg = e instanceof Error ? e.message : String(e);
         setError(msg);
         dispatch({ type: 'UPLOAD_ERROR', error: msg });
@@ -96,7 +106,8 @@ export function SamplePicker({ open, onClose }: SamplePickerProps) {
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            disabled={loadingId !== null}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label={t('common.close', 'Close')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

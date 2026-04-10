@@ -11,8 +11,7 @@
     "loading": "Cargando…",
     "fileInfo": "{{count}} faces · clic para reemplazar",
     "dropHint": "Suelta un archivo .3mf aquí",
-    "browseHint": "haz clic para explorar",
-    "trySample": "o probar un ejemplo"
+    "browseHintWithSample": "haz clic para explorar o <1>probar un ejemplo</1>"
   },
   "filamentList": {
     "heading": "Filamentos",

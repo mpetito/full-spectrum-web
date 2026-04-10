@@ -11,8 +11,7 @@
     "loading": "加载中…",
     "fileInfo": "{{count}} 个面 · 点击替换",
     "dropHint": "将 .3mf 文件拖放到此处",
-    "browseHint": "点击浏览",
-    "trySample": "或试用示例"
+    "browseHintWithSample": "点击浏览或<1>试用示例</1>"
   },
   "filamentList": {
     "heading": "耗材",

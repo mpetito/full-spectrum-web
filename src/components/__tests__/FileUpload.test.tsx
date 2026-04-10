@@ -51,14 +51,14 @@ describe('FileUpload - Sample Integration', () => {
 
   it('renders "try a sample" link in the empty state', () => {
     renderWithContext(<FileUpload />);
-    expect(screen.getByText('or try a sample')).toBeInTheDocument();
+    expect(screen.getByText('try a sample')).toBeInTheDocument();
   });
 
   it('opens SamplePicker when "try a sample" is clicked', async () => {
     const user = userEvent.setup();
     renderWithContext(<FileUpload />);
 
-    await user.click(screen.getByText('or try a sample'));
+    await user.click(screen.getByText('try a sample'));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Try a Sample' })).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('FileUpload - Sample Integration', () => {
     const fileInput = screen.getByLabelText(/choose a 3mf/i);
     const clickSpy = vi.spyOn(fileInput, 'click');
 
-    await user.click(screen.getByText('or try a sample'));
+    await user.click(screen.getByText('try a sample'));
 
     expect(clickSpy).not.toHaveBeenCalled();
   });
@@ -99,7 +99,7 @@ describe('FileUpload - Sample Integration', () => {
     renderWithContext(<FileUpload />);
 
     // Open sample picker
-    await user.click(screen.getByText('or try a sample'));
+    await user.click(screen.getByText('try a sample'));
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Try a Sample' })).toBeInTheDocument();
     });
