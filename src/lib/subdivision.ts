@@ -1,7 +1,7 @@
 /** Boundary face detection and recursive bisection encoding (serial only). */
 
 import { MIN_ABSOLUTE_EPSILON } from '../constants';
-import { LAYER_EPSILON_FACTOR, computeCentroidsZ, computeGlobalFaceLayers } from './mesh';
+import { LAYER_EPSILON_FACTOR, computeCentroidsZ } from './mesh';
 import type { MeshData } from './mesh';
 
 const HEX_CHARS = '0123456789ABCDEF';
@@ -341,8 +341,15 @@ export function prepareBoundaryContext(
         if (centroidsZ[i] < globalZMin) globalZMin = centroidsZ[i];
     }
 
-    const layerIndices = computeGlobalFaceLayers(mesh, layerHeight);
     const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
+
+    // Compute layer indices directly from pre-computed centroids
+    // (avoids re-computing centroidsZ inside computeGlobalFaceLayers)
+    const layerIndices = new Uint32Array(mesh.faceCount);
+    for (let i = 0; i < mesh.faceCount; i++) {
+        layerIndices[i] = Math.floor((centroidsZ[i] - globalZMin + epsilon) / layerHeight);
+    }
+
     const boundaryMask = findBoundaryFaces(mesh, layerIndices, layerHeight, globalZMin);
 
     return { globalZMin, epsilon, layerIndices, boundaryMask };
@@ -366,6 +373,13 @@ export function encodeBoundaryFaces(
         prepareBoundaryContext(mesh, layerHeight);
 
     const { clusterLayerMaps, faceClusterIndex } = options;
+
+    // Validate cluster data consistency
+    if (faceClusterIndex.length < mesh.faceCount) {
+        throw new Error(
+            `faceClusterIndex length (${faceClusterIndex.length}) < faceCount (${mesh.faceCount})`,
+        );
+    }
 
     // Default filament = overall mode
     const overallCounts = new Map<number, number>();

@@ -151,12 +151,12 @@ export interface ProcessOptions {
 }
 
 /**
- * Run the Dither3D pipeline on a 3MF ArrayBuffer.
+ * Run the Dither3D pipeline on a 3MF ArrayBuffer (sync bisection).
  *
  * @param inputData Raw 3MF file bytes
  * @param config Palette configuration
  * @param options Processing options
- * @returns [result, outputBytes, layerColorData] where outputBytes is undefined for dry runs
+ * @returns Promise resolving to [result, outputBytes, layerColorData]; outputBytes is undefined for dry runs
  */
 export function process(
   inputData: ArrayBuffer,

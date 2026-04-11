@@ -1,8 +1,6 @@
 /** Worker pool manager for parallel bisection encoding. */
 
 import type { MeshData } from './mesh';
-import { MIN_ABSOLUTE_EPSILON } from '../constants';
-import { LAYER_EPSILON_FACTOR } from './mesh';
 import { encodeBoundaryFaces, prepareBoundaryContext } from './subdivision';
 
 export interface PoolOptions {
@@ -30,10 +28,17 @@ export async function encodeBoundaryFacesParallel(
 
     // ---- Shared setup (via prepareBoundaryContext) ----
 
-    const { globalZMin, boundaryMask } =
+    const { globalZMin, epsilon, boundaryMask } =
         prepareBoundaryContext(mesh, layerHeight);
 
     const { clusterLayerMaps, faceClusterIndex } = options;
+
+    // Validate cluster data consistency
+    if (faceClusterIndex.length < mesh.faceCount) {
+        throw new Error(
+            `faceClusterIndex length (${faceClusterIndex.length}) < faceCount (${mesh.faceCount})`,
+        );
+    }
 
     // Default filament = overall mode
     const overallCounts = new Map<number, number>();
@@ -72,8 +77,6 @@ export async function encodeBoundaryFacesParallel(
     }
 
     // ---- Parallel path ----
-
-    const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
 
     // Split boundary indices into roughly equal chunks
     const chunkSize = Math.ceil(boundaryIndices.length / workerCount);
