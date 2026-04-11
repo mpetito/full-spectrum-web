@@ -4,6 +4,8 @@ import { OrbitControls, Center, Bounds } from "@react-three/drei";
 import * as THREE from "three";
 import { useAppState } from "../state/AppContext";
 import type { LayerColorData } from "../lib/pipeline";
+import { MIN_ABSOLUTE_EPSILON } from "../constants";
+import { LAYER_EPSILON_FACTOR } from "../lib/mesh";
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
@@ -59,6 +61,7 @@ const LAYER_VERTEX_SHADER = /* glsl */ `
 const LAYER_FRAGMENT_SHADER = /* glsl */ `
   uniform float uZMin;
   uniform float uLayerHeight;
+  uniform float uEpsilon;
   uniform float uTotalLayers;
   uniform float uClusterCount;
   uniform sampler2D uLayerColorTex;
@@ -68,8 +71,7 @@ const LAYER_FRAGMENT_SHADER = /* glsl */ `
   varying float vClusterIndex;
 
   void main() {
-    float epsilon = uLayerHeight * 0.001;
-    float layerF = floor((vModelZ - uZMin + epsilon) / uLayerHeight);
+    float layerF = floor((vModelZ - uZMin + uEpsilon) / uLayerHeight);
     layerF = clamp(layerF, 0.0, uTotalLayers - 1.0);
 
     // Sample 2D texture: x=layer, y=cluster (center of texels)
@@ -185,12 +187,18 @@ function MeshGeometry() {
 
     const tex = buildClusterLayerTexture(layerColorData, filamentColors);
 
+    const epsilon = Math.max(
+      layerColorData.layerHeight * LAYER_EPSILON_FACTOR,
+      MIN_ABSOLUTE_EPSILON,
+    );
+
     return new THREE.ShaderMaterial({
       vertexShader: LAYER_VERTEX_SHADER,
       fragmentShader: LAYER_FRAGMENT_SHADER,
       uniforms: {
         uZMin: { value: layerColorData.zMin },
         uLayerHeight: { value: layerColorData.layerHeight },
+        uEpsilon: { value: epsilon },
         uTotalLayers: { value: layerColorData.totalLayers },
         uClusterCount: { value: layerColorData.clusterCount },
         uLayerColorTex: { value: tex },

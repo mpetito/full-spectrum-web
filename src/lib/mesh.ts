@@ -1,5 +1,7 @@
 /** Mesh operations: centroid computation, layer assignment, face clustering. */
 
+import { MIN_ABSOLUTE_EPSILON } from '../constants';
+
 export const LAYER_EPSILON_FACTOR = 0.001;
 
 export class MeshError extends Error {
@@ -46,7 +48,7 @@ export function computeGlobalFaceLayers(mesh: MeshData, layerHeight: number): Ui
   for (let i = 0; i < centroidsZ.length; i++) {
     if (centroidsZ[i] < zMin) zMin = centroidsZ[i];
   }
-  const epsilon = layerHeight * LAYER_EPSILON_FACTOR;
+  const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
   const result = new Uint32Array(mesh.faceCount);
   for (let i = 0; i < mesh.faceCount; i++) {
     result[i] = Math.floor((centroidsZ[i] - zMin + epsilon) / layerHeight);
@@ -84,7 +86,7 @@ export function computeRegionLayers(
     if (centroidsZ[i] < zMin) zMin = centroidsZ[i];
   }
 
-  const epsilon = layerHeight * LAYER_EPSILON_FACTOR;
+  const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
   const layerIndices = new Uint32Array(n);
   let maxLayer = 0;
   for (let i = 0; i < n; i++) {

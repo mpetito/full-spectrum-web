@@ -6,22 +6,23 @@ import { CyclicEditor } from "./CyclicEditor";
 import { GradientEditor } from "./GradientEditor";
 import { ConfigImportButton } from "./ConfigImportExport";
 
-type PaletteType = "none" | "cyclic" | "gradient";
-
-function paletteTypeOf(mapping: ColorMapping | undefined): PaletteType {
+function paletteTypeOf(mapping: ColorMapping | undefined): string {
   if (!mapping) return "none";
   return mapping.outputPalette.type;
 }
 
-function defaultPalette(type: "cyclic" | "gradient"): Palette {
-  if (type === "cyclic") return { type: "cyclic", pattern: [1, 2] };
-  return {
-    type: "gradient",
-    stops: [
-      { t: 0, filament: 1 },
-      { t: 1, filament: 2 },
-    ],
-  };
+function defaultPalette(type: string): Palette {
+  if (type === "gradient") {
+    return {
+      type: "gradient",
+      stops: [
+        { t: 0, filament: 1 },
+        { t: 1, filament: 2 },
+      ],
+    };
+  }
+  // Default to cyclic for 'cyclic' and any unknown type
+  return { type: "cyclic", pattern: [1, 2] };
 }
 
 export function PaletteMapper() {
@@ -36,7 +37,7 @@ export function PaletteMapper() {
     dispatch({ type: "UPDATE_CONFIG", config: updated });
   };
 
-  const setType = (index: number, ptype: PaletteType) => {
+  const setType = (index: number, ptype: string) => {
     if (ptype === "none") {
       dispatchMappings(mappings.filter((_, i) => i !== index));
     } else {
@@ -138,7 +139,7 @@ export function PaletteMapper() {
             {/* Palette type selector */}
             <select
               value={paletteTypeOf(mapping)}
-              onChange={(e) => setType(i, e.target.value as PaletteType)}
+              onChange={(e) => setType(i, e.target.value)}
               className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
             >
               {getPaletteTypes().map((pt) => (

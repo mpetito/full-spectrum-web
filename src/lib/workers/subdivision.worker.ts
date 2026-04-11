@@ -8,8 +8,8 @@ interface WorkerInput {
   boundaryIndices: number[];
   layerHeight: number;
   globalZMin: number;
-  clusterLayerMaps: number[][];
-  faceClusterIndex: number[];
+  clusterLayerMaps: Uint8Array[];
+  faceClusterIndex: Uint16Array;
   defaultFilament: number;
   maxDepth: number;
   epsilon: number;
@@ -33,15 +33,11 @@ self.onmessage = (e: MessageEvent<WorkerInput>) => {
     epsilon,
   } = e.data;
 
-  // Reconstruct typed arrays from plain arrays
-  const typedClusterMaps = clusterLayerMaps.map(arr => new Uint8Array(arr));
-  const typedFaceCluster = new Uint16Array(faceClusterIndex);
-
   const subdivideFn = makeSubdivider(
     layerHeight,
     globalZMin,
-    typedClusterMaps,
-    typedFaceCluster,
+    clusterLayerMaps,
+    faceClusterIndex,
     defaultFilament,
     epsilon,
   );

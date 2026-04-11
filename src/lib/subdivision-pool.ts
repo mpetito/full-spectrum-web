@@ -75,10 +75,6 @@ export async function encodeBoundaryFacesParallel(
 
     const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
 
-    // Convert cluster data for worker transfer (plain arrays)
-    const clusterMapsForWorker = clusterLayerMaps.map(m => Array.from(m));
-    const faceClusterArray = Array.from(faceClusterIndex);
-
     // Split boundary indices into roughly equal chunks
     const chunkSize = Math.ceil(boundaryIndices.length / workerCount);
     const chunks: number[][] = [];
@@ -142,8 +138,8 @@ export async function encodeBoundaryFacesParallel(
                 boundaryIndices: chunk,
                 layerHeight,
                 globalZMin,
-                clusterLayerMaps: clusterMapsForWorker,
-                faceClusterIndex: faceClusterArray,
+                clusterLayerMaps,
+                faceClusterIndex,
                 defaultFilament,
                 maxDepth,
                 epsilon,
