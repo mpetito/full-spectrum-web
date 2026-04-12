@@ -1,23 +1,43 @@
 import { useTranslation } from 'react-i18next';
-import { FILAMENT_COLORS } from '../constants';
 import { MAX_FILAMENTS } from '../lib/encoding';
+import { buildBresenhamLayerMap } from '../lib/palette';
 import type { GradientStop } from '../lib/config';
+import { NumericInput } from './NumericInput';
 
 interface BresenhamEditorProps {
   stops: GradientStop[];
   onChange: (stops: GradientStop[]) => void;
+  filamentColors: string[];
 }
 
-function buildBresenhamCSS(stops: GradientStop[]): string {
+const PREVIEW_LAYERS = 100;
+
+function buildBresenhamCSS(stops: GradientStop[], filamentColors: string[]): string {
   if (stops.length === 0) return 'transparent';
-  const sorted = [...stops].sort((a, b) => a.t - b.t);
-  const parts = sorted.map(
-    (s) => `${FILAMENT_COLORS[s.filament] ?? '#808080'} ${(s.t * 100).toFixed(0)}%`,
-  );
+  const tuples = stops.map((s) => [s.t, s.filament] as [number, number]);
+  const layerMap = buildBresenhamLayerMap(PREVIEW_LAYERS, tuples);
+
+  const parts: string[] = [];
+  let runStart = 0;
+  let runColor = filamentColors[layerMap[0]] ?? '#808080';
+
+  for (let i = 1; i <= PREVIEW_LAYERS; i++) {
+    const color = i < PREVIEW_LAYERS ? (filamentColors[layerMap[i]] ?? '#808080') : '#808080';
+    if (i === PREVIEW_LAYERS || color !== runColor) {
+      const startPct = ((runStart / PREVIEW_LAYERS) * 100).toFixed(1);
+      const endPct = ((i / PREVIEW_LAYERS) * 100).toFixed(1);
+      parts.push(`${runColor} ${startPct}% ${endPct}%`);
+      if (i < PREVIEW_LAYERS) {
+        runStart = i;
+        runColor = color;
+      }
+    }
+  }
+
   return `linear-gradient(to right, ${parts.join(', ')})`;
 }
 
-export function BresenhamEditor({ stops, onChange }: BresenhamEditorProps) {
+export function BresenhamEditor({ stops, onChange, filamentColors }: BresenhamEditorProps) {
   const { t } = useTranslation();
   const updateStop = (index: number, patch: Partial<GradientStop>) => {
     const next = stops.map((s, i) => (i === index ? { ...s, ...patch } : s));
@@ -42,29 +62,28 @@ export function BresenhamEditor({ stops, onChange }: BresenhamEditorProps) {
       {/* Preview bar */}
       <div
         className="h-3 rounded-sm border border-gray-300 dark:border-gray-600"
-        style={{ background: buildBresenhamCSS(stops) }}
+        style={{ background: buildBresenhamCSS(stops, filamentColors) }}
       />
 
       <div className="flex flex-col gap-1">
         {stops.map((stop, i) => (
           <div key={i} className="flex items-center gap-1.5">
-            <input
-              type="number"
+            <NumericInput
+              value={stop.t}
+              onChange={(v) => updateStop(i, { t: v })}
               min={0}
               max={1}
               step={0.01}
-              value={stop.t}
-              onChange={(e) => updateStop(i, { t: parseFloat(e.target.value) || 0 })}
               className="w-16 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs tabular-nums"
             />
             <select
               value={stop.filament}
               onChange={(e) => updateStop(i, { filament: Number(e.target.value) })}
               className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 pl-1 pr-5 py-0.5 text-xs"
-              style={{ borderLeftColor: FILAMENT_COLORS[stop.filament] ?? '#808080', borderLeftWidth: 3 }}
+              style={{ borderLeftColor: filamentColors[stop.filament] ?? '#808080', borderLeftWidth: 3 }}
             >
               {Array.from({ length: MAX_FILAMENTS }, (_, n) => n + 1).map((n) => (
-                <option key={n} value={n}>
+                <option key={n} value={n} style={{ backgroundColor: filamentColors[n] ?? '#808080', color: '#fff' }}>
                   {n}
                 </option>
               ))}

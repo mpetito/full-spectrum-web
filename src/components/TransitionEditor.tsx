@@ -1,14 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { FILAMENT_COLORS } from '../constants';
 import { MAX_FILAMENTS } from '../lib/encoding';
 import type { GradientStop, TransitionWidth, TransitionPalette } from '../lib/config';
 import { buildTransitionLayerMap, type PaletteContext } from '../lib/palette';
+import { NumericInput } from './NumericInput';
 
 interface TransitionEditorProps {
   stops: GradientStop[];
   transitionWidth: TransitionWidth;
   maxCycleLength: number;
   onChange: (update: Partial<TransitionPalette>) => void;
+  filamentColors: string[];
 }
 
 const PREVIEW_LAYERS = 100;
@@ -17,6 +18,7 @@ function buildPreviewCSS(
   stops: GradientStop[],
   transitionWidth: TransitionWidth,
   maxCycleLength: number,
+  filamentColors: string[],
 ): string {
   if (stops.length < 2) return 'transparent';
 
@@ -27,10 +29,10 @@ function buildPreviewCSS(
   // Build CSS gradient from layer map segments
   const parts: string[] = [];
   let runStart = 0;
-  let runColor = FILAMENT_COLORS[layerMap[0]] ?? '#808080';
+  let runColor = filamentColors[layerMap[0]] ?? '#808080';
 
   for (let i = 1; i <= PREVIEW_LAYERS; i++) {
-    const color = i < PREVIEW_LAYERS ? (FILAMENT_COLORS[layerMap[i]] ?? '#808080') : '#808080';
+    const color = i < PREVIEW_LAYERS ? (filamentColors[layerMap[i]] ?? '#808080') : '#808080';
     if (i === PREVIEW_LAYERS || color !== runColor) {
       const startPct = ((runStart / PREVIEW_LAYERS) * 100).toFixed(1);
       const endPct = ((i / PREVIEW_LAYERS) * 100).toFixed(1);
@@ -45,7 +47,7 @@ function buildPreviewCSS(
   return `linear-gradient(to right, ${parts.join(', ')})`;
 }
 
-export function TransitionEditor({ stops, transitionWidth, maxCycleLength, onChange }: TransitionEditorProps) {
+export function TransitionEditor({ stops, transitionWidth, maxCycleLength, onChange, filamentColors }: TransitionEditorProps) {
   const { t } = useTranslation();
 
   const updateStop = (index: number, patch: Partial<GradientStop>) => {
@@ -89,30 +91,29 @@ export function TransitionEditor({ stops, transitionWidth, maxCycleLength, onCha
       {/* Preview bar */}
       <div
         className="h-3 rounded-sm border border-gray-300 dark:border-gray-600"
-        style={{ background: buildPreviewCSS(stops, transitionWidth, maxCycleLength) }}
+        style={{ background: buildPreviewCSS(stops, transitionWidth, maxCycleLength, filamentColors) }}
       />
 
       {/* Stops editor */}
       <div className="flex flex-col gap-1">
         {stops.map((stop, i) => (
           <div key={i} className="flex items-center gap-1.5">
-            <input
-              type="number"
+            <NumericInput
+              value={stop.t}
+              onChange={(v) => updateStop(i, { t: v })}
               min={0}
               max={1}
               step={0.01}
-              value={stop.t}
-              onChange={(e) => updateStop(i, { t: parseFloat(e.target.value) || 0 })}
               className="w-16 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs tabular-nums"
             />
             <select
               value={stop.filament}
               onChange={(e) => updateStop(i, { filament: Number(e.target.value) })}
               className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 pl-1 pr-5 py-0.5 text-xs"
-              style={{ borderLeftColor: FILAMENT_COLORS[stop.filament] ?? '#808080', borderLeftWidth: 3 }}
+              style={{ borderLeftColor: filamentColors[stop.filament] ?? '#808080', borderLeftWidth: 3 }}
             >
               {Array.from({ length: MAX_FILAMENTS }, (_, n) => n + 1).map((n) => (
-                <option key={n} value={n}>
+                <option key={n} value={n} style={{ backgroundColor: filamentColors[n] ?? '#808080', color: '#fff' }}>
                   {n}
                 </option>
               ))}
@@ -149,23 +150,21 @@ export function TransitionEditor({ stops, transitionWidth, maxCycleLength, onCha
           <option value="mm">{t('transitionEditor.widthModeMm')}</option>
         </select>
         {transitionWidth.mode === 'percent' && (
-          <input
-            type="number"
+          <NumericInput
+            value={transitionWidth.value}
+            onChange={(v) => setWidthValue(v)}
             min={0.01}
             max={1}
             step={0.01}
-            value={transitionWidth.value}
-            onChange={(e) => setWidthValue(parseFloat(e.target.value) || 0.01)}
             className="w-16 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs tabular-nums"
           />
         )}
         {transitionWidth.mode === 'mm' && (
-          <input
-            type="number"
+          <NumericInput
+            value={transitionWidth.value}
+            onChange={(v) => setWidthValue(v)}
             min={0.01}
             step={0.1}
-            value={transitionWidth.value}
-            onChange={(e) => setWidthValue(parseFloat(e.target.value) || 0.01)}
             className="w-16 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs tabular-nums"
           />
         )}
@@ -176,12 +175,12 @@ export function TransitionEditor({ stops, transitionWidth, maxCycleLength, onCha
         <label className="text-xs text-gray-500 dark:text-gray-400">
           {t('transitionEditor.maxCycleLength')}
         </label>
-        <input
-          type="number"
+        <NumericInput
+          value={maxCycleLength}
+          onChange={(v) => onChange({ maxCycleLength: v })}
           min={1}
           step={1}
-          value={maxCycleLength}
-          onChange={(e) => onChange({ maxCycleLength: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+          integer
           className="w-16 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs tabular-nums"
         />
       </div>

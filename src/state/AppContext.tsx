@@ -29,6 +29,8 @@ export interface AppState {
   filamentColors: string[];
   progress: { stage: string; done: number; total: number } | null;
   previewMode: 'input' | 'output';
+  autoApply: boolean;
+  manualApplyCount: number;
 }
 
 // ── Actions ─────────────────────────────────────────────────────────────────
@@ -50,7 +52,9 @@ export type AppAction =
   | { type: "SET_INPUT_FILENAME"; filename: string }
   | { type: "SET_FILAMENT_COLORS"; colors: string[] }
   | { type: "SET_PROGRESS"; progress: { stage: string; done: number; total: number } | null }
-  | { type: "SET_PREVIEW_MODE"; mode: "input" | "output" };
+  | { type: "SET_PREVIEW_MODE"; mode: "input" | "output" }
+  | { type: "TOGGLE_AUTO_APPLY" }
+  | { type: "MANUAL_APPLY" };
 
 // ── Initial state ───────────────────────────────────────────────────────────
 
@@ -68,6 +72,8 @@ const initialState: AppState = {
   filamentColors: [...FILAMENT_COLORS],
   progress: null,
   previewMode: 'output',
+  autoApply: true,
+  manualApplyCount: 0,
 };
 
 // ── Reducer ─────────────────────────────────────────────────────────────────
@@ -79,12 +85,17 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case "UPLOAD_START":
       return { ...state, status: "loading", error: null, previewMode: 'input' as const };
 
-    case "UPLOAD_SUCCESS":
+    case "UPLOAD_SUCCESS": {
+      const uploadedLH = action.meshData.layerHeight;
+      const newConfig = uploadedLH !== undefined && uploadedLH >= 0.04 && uploadedLH <= 0.2
+        ? { ...state.config, layerHeightMm: uploadedLH }
+        : state.config;
       return {
         ...state,
         status: "ready",
         meshData: action.meshData,
         rawFileData: action.rawFileData,
+        config: newConfig,
         error: null,
         // Clear previous processing results
         processedHex: null,
@@ -94,6 +105,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         inputFilename: null,
         previewMode: 'input' as const,
       };
+    }
 
     case "UPLOAD_ERROR":
       return { ...state, status: "error", error: action.error };
@@ -133,6 +145,12 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case "SET_PREVIEW_MODE":
       return { ...state, previewMode: action.mode };
+
+    case "TOGGLE_AUTO_APPLY":
+      return { ...state, autoApply: !state.autoApply };
+
+    case "MANUAL_APPLY":
+      return { ...state, manualApplyCount: state.manualApplyCount + 1 };
 
     default:
       return state;

@@ -26,7 +26,9 @@
     "formatBambu": "BambuStudio",
     "formatBoth": "Beide",
     "boundarySplit": "Grenzaufteilung",
-    "maxSplitDepth": "Max. Aufteilungstiefe: {{value}}"
+    "maxSplitDepth": "Max. Aufteilungstiefe: {{value}}",
+    "autoApply": "Änderungen automatisch anwenden",
+    "applyButton": "Anwenden"
   },
   "paletteMapper": {
     "heading": "Farbzuordnungen",

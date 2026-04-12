@@ -30,7 +30,7 @@ function defaultPalette(type: string): Palette {
         { t: 1, filament: 2 },
       ],
       transitionWidth: { mode: 'auto' },
-      maxCycleLength: 2,
+      maxCycleLength: 1,
     };
   }
   // Default to cyclic for 'cyclic' and any unknown type
@@ -170,6 +170,7 @@ export function PaletteMapper() {
                 onChange={(pattern) =>
                   updatePalette(i, { type: "cyclic", pattern })
                 }
+                filamentColors={filamentColors}
               />
             )}
             {mapping.outputPalette.type === "bresenham" && (
@@ -178,6 +179,7 @@ export function PaletteMapper() {
                 onChange={(stops) =>
                   updatePalette(i, { type: "bresenham", stops })
                 }
+                filamentColors={filamentColors}
               />
             )}
             {mapping.outputPalette.type === "transition" && (
@@ -188,6 +190,7 @@ export function PaletteMapper() {
                 onChange={(update) =>
                   updatePalette(i, { ...mapping.outputPalette, ...update } as TransitionPalette)
                 }
+                filamentColors={filamentColors}
               />
             )}
           </div>

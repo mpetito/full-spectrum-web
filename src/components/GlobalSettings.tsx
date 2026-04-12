@@ -4,7 +4,7 @@ import { defaultConfig, type Dither3DConfig } from '../lib/config';
 
 export function GlobalSettings() {
   const { t } = useTranslation();
-  const { config } = useAppState();
+  const { config, autoApply, status } = useAppState();
   const dispatch = useAppDispatch();
 
   const update = (patch: Partial<Dither3DConfig>) => {
@@ -80,6 +80,28 @@ export function GlobalSettings() {
               className="w-full accent-indigo-600"
             />
           </label>
+        )}
+
+        {/* Auto-apply toggle */}
+        <div className="flex items-center gap-2 mt-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={autoApply}
+              onChange={() => dispatch({ type: "TOGGLE_AUTO_APPLY" })}
+              className="accent-indigo-600"
+            />
+            {t('globalSettings.autoApply')}
+          </label>
+        </div>
+        {!autoApply && (
+          <button
+            onClick={() => dispatch({ type: "MANUAL_APPLY" })}
+            disabled={status === 'processing'}
+            className="mt-2 px-4 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {t('globalSettings.applyButton')}
+          </button>
         )}
       </div>
     </section>

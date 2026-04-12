@@ -279,3 +279,92 @@ describe('appReducer – previewMode', () => {
         expect(next.previewMode).toBe(initialState.previewMode);
     });
 });
+
+describe('appReducer – autoApply', () => {
+    it('initial autoApply is true', () => {
+        expect(initialState.autoApply).toBe(true);
+    });
+
+    it('initial manualApplyCount is 0', () => {
+        expect(initialState.manualApplyCount).toBe(0);
+    });
+
+    it('TOGGLE_AUTO_APPLY flips autoApply', () => {
+        const next = appReducer(initialState, { type: 'TOGGLE_AUTO_APPLY' });
+        expect(next.autoApply).toBe(false);
+        const next2 = appReducer(next, { type: 'TOGGLE_AUTO_APPLY' });
+        expect(next2.autoApply).toBe(true);
+    });
+
+    it('MANUAL_APPLY increments manualApplyCount', () => {
+        const next = appReducer(initialState, { type: 'MANUAL_APPLY' });
+        expect(next.manualApplyCount).toBe(1);
+        const next2 = appReducer(next, { type: 'MANUAL_APPLY' });
+        expect(next2.manualApplyCount).toBe(2);
+    });
+
+    it('RESET restores autoApply and manualApplyCount', () => {
+        const modified: AppState = {
+            ...initialState,
+            autoApply: false,
+            manualApplyCount: 5,
+        };
+        const next = appReducer(modified, { type: 'RESET' });
+        expect(next.autoApply).toBe(true);
+        expect(next.manualApplyCount).toBe(0);
+    });
+});
+
+describe('appReducer – UPLOAD_SUCCESS layer height merge', () => {
+    it('merges layer height from meshData when in valid range', () => {
+        const meshWithLayerHeight: ThreeMFData = {
+            ...mockMeshData,
+            layerHeight: 0.08,
+        };
+        const prev: AppState = { ...initialState, status: 'loading' };
+        const next = appReducer(prev, {
+            type: 'UPLOAD_SUCCESS',
+            meshData: meshWithLayerHeight,
+            rawFileData: new ArrayBuffer(10),
+        });
+        expect(next.config.layerHeightMm).toBe(0.08);
+    });
+
+    it('does not merge layer height below 0.04', () => {
+        const meshWithLayerHeight: ThreeMFData = {
+            ...mockMeshData,
+            layerHeight: 0.01,
+        };
+        const prev: AppState = { ...initialState, status: 'loading' };
+        const next = appReducer(prev, {
+            type: 'UPLOAD_SUCCESS',
+            meshData: meshWithLayerHeight,
+            rawFileData: new ArrayBuffer(10),
+        });
+        expect(next.config.layerHeightMm).toBe(initialState.config.layerHeightMm);
+    });
+
+    it('does not merge layer height above 0.2', () => {
+        const meshWithLayerHeight: ThreeMFData = {
+            ...mockMeshData,
+            layerHeight: 0.5,
+        };
+        const prev: AppState = { ...initialState, status: 'loading' };
+        const next = appReducer(prev, {
+            type: 'UPLOAD_SUCCESS',
+            meshData: meshWithLayerHeight,
+            rawFileData: new ArrayBuffer(10),
+        });
+        expect(next.config.layerHeightMm).toBe(initialState.config.layerHeightMm);
+    });
+
+    it('does not merge when meshData has no layerHeight', () => {
+        const prev: AppState = { ...initialState, status: 'loading' };
+        const next = appReducer(prev, {
+            type: 'UPLOAD_SUCCESS',
+            meshData: mockMeshData,
+            rawFileData: new ArrayBuffer(10),
+        });
+        expect(next.config.layerHeightMm).toBe(initialState.config.layerHeightMm);
+    });
+});

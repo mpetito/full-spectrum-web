@@ -1,13 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { FILAMENT_COLORS } from '../constants';
 import { MAX_FILAMENTS } from '../lib/encoding';
 
 interface CyclicEditorProps {
   pattern: number[];
   onChange: (pattern: number[]) => void;
+  filamentColors: string[];
 }
 
-export function CyclicEditor({ pattern, onChange }: CyclicEditorProps) {
+export function CyclicEditor({ pattern, onChange, filamentColors }: CyclicEditorProps) {
   const { t } = useTranslation();
   const updateEntry = (index: number, value: number) => {
     const next = [...pattern];
@@ -36,10 +36,10 @@ export function CyclicEditor({ pattern, onChange }: CyclicEditorProps) {
               value={filament}
               onChange={(e) => updateEntry(i, Number(e.target.value))}
               className="rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 pl-1 pr-5 py-0.5 text-xs"
-              style={{ borderLeftColor: FILAMENT_COLORS[filament] ?? '#808080', borderLeftWidth: 3 }}
+              style={{ borderLeftColor: filamentColors[filament] ?? '#808080', borderLeftWidth: 3 }}
             >
               {Array.from({ length: MAX_FILAMENTS }, (_, n) => n + 1).map((n) => (
-                <option key={n} value={n}>
+                <option key={n} value={n} style={{ backgroundColor: filamentColors[n] ?? '#808080', color: '#fff' }}>
                   {n}
                 </option>
               ))}
