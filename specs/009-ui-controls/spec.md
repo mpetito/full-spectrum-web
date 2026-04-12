@@ -73,7 +73,7 @@ Fix seven distinct UI issues to make the editing workflow intuitive and responsi
 
 - No perceptible jank — preview bar recalculation must be < 16 ms for 100 layers
 - Existing tests must not break
-- New UI strings must be added to all locale files (`en`, `de`, `fr`, `ja`, `zh`)
+- New UI strings must be added to all locale files (`en`, `de`, `fr`, `es`, `zh`)
 
 ## Design Constraints
 

@@ -55,13 +55,13 @@ Seven UI improvements grouped into four implementation phases: defaults & 3MF fi
 
 11. [x] In `src/state/AppContext.tsx`:
     - Add `autoApply: boolean` to `AppState` (default `true`)
-    - Add actions: `TOGGLE_AUTO_APPLY` (toggles boolean), `MANUAL_APPLY` (no-op marker for triggering processing)
-    - Reducer: `TOGGLE_AUTO_APPLY` flips `autoApply`; `MANUAL_APPLY` returns state as-is (the hook listens for it)
+    - Add actions: `TOGGLE_AUTO_APPLY` (toggles boolean), `MANUAL_APPLY` (increments a manual-apply counter used to trigger processing)
+    - Reducer: `TOGGLE_AUTO_APPLY` flips `autoApply`; `MANUAL_APPLY` increments `manualApplyCount` so the hook can detect a one-shot manual trigger
 
 12. [x] In `src/hooks/useProcessing.ts`:
     - Read `autoApply` from state
     - If `autoApply` is false, skip the debounced processing on config changes
-    - Add a separate `useEffect` that listens for `MANUAL_APPLY` action dispatches (use a counter/ref bumped on MANUAL_APPLY) to trigger a single processing run
+    - Add a separate `useEffect` that listens for `manualApplyCount` changes from the reducer to trigger a single processing run
 
 13. [x] In `src/components/GlobalSettings.tsx`:
     - Add an "Auto Apply" toggle switch after the layer height slider
@@ -77,7 +77,7 @@ Seven UI improvements grouped into four implementation phases: defaults & 3MF fi
 
 16. [x] Verify `src/components/MeshViewer.tsx` → `MeshGeometry` already uses `filamentColors` state for input preview colours (it does — the `useEffect` depends on `[geometry, meshData, filamentColors, invalidate]`)
 17. [x] Verify that when user edits filament colours while in Input preview mode, the 3D view updates (the `useEffect` already handles this)
-18. [x] Add missing i18n keys for all new UI strings in `en`, `de`, `fr`, `ja`, `zh` locale files
+18. [x] Add missing i18n keys for all new UI strings in `en`, `de`, `fr`, `es`, `zh` locale files
 
 19. [x] Verification: Toggle to Input → model shows original paint colours; edit filament colour → input preview updates
 
@@ -95,7 +95,7 @@ Seven UI improvements grouped into four implementation phases: defaults & 3MF fi
 | `src/i18n/locales/en.json` | Modify | Add new i18n keys |
 | `src/i18n/locales/de.json` | Modify | Add new i18n keys |
 | `src/i18n/locales/fr.json` | Modify | Add new i18n keys |
-| `src/i18n/locales/ja.json` | Modify | Add new i18n keys |
+| `src/i18n/locales/es.json` | Modify | Add new i18n keys |
 | `src/i18n/locales/zh.json` | Modify | Add new i18n keys |
 
 ## Testing Strategy

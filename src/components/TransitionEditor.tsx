@@ -12,6 +12,12 @@ interface TransitionEditorProps {
   filamentColors: string[];
 }
 
+function contrastText(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#000' : '#fff';
+}
+
 const PREVIEW_LAYERS = 100;
 
 function buildPreviewCSS(
@@ -113,7 +119,7 @@ export function TransitionEditor({ stops, transitionWidth, maxCycleLength, onCha
               style={{ borderLeftColor: filamentColors[stop.filament] ?? '#808080', borderLeftWidth: 3 }}
             >
               {Array.from({ length: MAX_FILAMENTS }, (_, n) => n + 1).map((n) => (
-                <option key={n} value={n} style={{ backgroundColor: filamentColors[n] ?? '#808080', color: '#fff' }}>
+                <option key={n} value={n} style={{ backgroundColor: filamentColors[n] ?? '#808080', color: contrastText(filamentColors[n] ?? '#808080') }}>
                   {n}
                 </option>
               ))}

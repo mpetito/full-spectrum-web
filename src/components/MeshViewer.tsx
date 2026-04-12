@@ -171,6 +171,15 @@ function MeshGeometry() {
     invalidate();
   }, [geometry, layerColorData, meshData, invalidate]);
 
+  // Stable input material — avoids reconciliation issues when toggling preview mode
+  const inputMaterial = useMemo(
+    () => new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true }),
+    [],
+  );
+  useEffect(() => {
+    return () => inputMaterial.dispose();
+  }, [inputMaterial]);
+
   // Invalidate on preview mode switch without re-running O(faceCount) color fill
   useEffect(() => {
     invalidate();
@@ -230,15 +239,10 @@ function MeshGeometry() {
 
   if (!geometry) return null;
 
-  if (previewMode === "output" && shaderMaterial) {
-    return <mesh geometry={geometry} material={shaderMaterial} />;
-  }
+  const activeMaterial =
+    previewMode === "output" && shaderMaterial ? shaderMaterial : inputMaterial;
 
-  return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial vertexColors flatShading />
-    </mesh>
-  );
+  return <mesh geometry={geometry} material={activeMaterial} />;
 }
 
 /** Renders a 10mm-grid build plate sized to the model bounding box, positioned just below the model's minimum Z. */
