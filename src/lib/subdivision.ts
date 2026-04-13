@@ -1,6 +1,6 @@
 /** Boundary face detection and recursive bisection encoding (serial only). */
 
-import { MIN_ABSOLUTE_EPSILON } from '../constants';
+import { MIN_ABSOLUTE_EPSILON, Z_TOLERANCE_FACTOR } from '../constants';
 import { LAYER_EPSILON_FACTOR, computeCentroidsZ } from './mesh';
 import type { MeshData } from './mesh';
 
@@ -64,6 +64,7 @@ export function makeSubdivider(
 ): SubdivideFn {
     const invLh = 1.0 / layerHeight;
     const limitSq = layerHeight * layerHeight;
+    const zTolerance = layerHeight * Z_TOLERANCE_FACTOR;
 
     function subdivide(
         z0: number, z1: number, z2: number,
@@ -175,7 +176,25 @@ export function makeSubdivider(
             return -1;
         }
 
-        if (nLong >= 1) {
+        if (nLong === 0 && (zHi - zLo) <= zTolerance) {
+            // All edges shorter than layerHeight and Z-span within the configured tolerance.
+            // Use vertex-majority: the "middle" Z vertex determines the 2-vs-1 split.
+            const zMid = z0 + z1 + z2 - zLo - zHi;
+            const midF = (zMid - globalZMin + epsilon) * invLh;
+            const midLayer = midF < 0 ? 0 : Math.floor(midF);
+            const chosenLayer = midLayer === layerLo ? layerLo : layerHi;
+            const layerMap = clusterLayerMaps[faceClusterIndex[faceIdx]];
+            const state = chosenLayer < layerMap.length ? layerMap[chosenLayer] : defaultFilament;
+            if (state <= 2) {
+                nibbles.push(state << 2);
+            } else {
+                nibbles.push(0xC);
+                nibbles.push(state - 3);
+            }
+            return state;
+        }
+
+        {
             // 2-split: keep the most horizontal edge (smallest dz²), bisect the other two
             const splitPos = nibbles.length;
             nibbles.push(0);
@@ -235,20 +254,6 @@ export function makeSubdivider(
             nibbles[splitPos] = (specialSide << 2) | 2;
             return -1;
         }
-
-        // n_long === 0: no edges long enough to split, assign via centroid
-        const centroidZ = (z0 + z1 + z2) / 3.0;
-        const clF = (centroidZ - globalZMin + epsilon) * invLh;
-        const cl = clF < 0 ? 0 : Math.floor(clF);
-        const layerMap = clusterLayerMaps[faceClusterIndex[faceIdx]];
-        const state = cl < layerMap.length ? layerMap[cl] : defaultFilament;
-        if (state <= 2) {
-            nibbles.push(state << 2);
-        } else {
-            nibbles.push(0xC);
-            nibbles.push(state - 3);
-        }
-        return state;
     }
 
     return subdivide;

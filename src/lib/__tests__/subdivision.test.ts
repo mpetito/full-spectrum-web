@@ -176,6 +176,102 @@ describe('multi-cluster encoding', () => {
   });
 });
 
+describe('small-edge boundary straddling', () => {
+  it('uses vertex-majority for tiny triangle straddling a boundary', () => {
+    const layerHeight = 0.1;
+    // 6 layers: alternating filament 1 and 2
+    const clusterLayerMaps = [new Uint8Array([1, 2, 1, 2, 1, 2])];
+    const faceClusterIndex = new Uint16Array([0]);
+    const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
+
+    const subdiv = makeSubdivider(layerHeight, 0.0, clusterLayerMaps, faceClusterIndex, 1, epsilon);
+    const nibbles: number[] = [];
+
+    // Tiny triangle straddling layer boundary at z=0.5 (layer 4 ↔ 5)
+    // Z-span = 0.001, well within tolerance (Z_TOLERANCE_FACTOR * layerHeight)
+    // v0 (z=0.4995) → layer 4, v1 (z=0.5005) → layer 5, v2 (z=0.500+ε) → layer 5
+    // Vertex majority: 2 in layer 5, 1 in layer 4 → assigns layer 5 (filament 2)
+    const result = subdiv(
+      0.4995, 0.5005, 0.500,
+      [0, 0, 0.4995], [0.01, 0, 0.5005], [0.005, 0, 0.500],
+      5, nibbles, 0,
+    );
+
+    // Vertex-majority produces a leaf (O(1)), not a recursive split
+    expect(result).toBeGreaterThanOrEqual(0);
+    expect(result).toBe(2); // filament for layer 5
+    expect(nibbles.length).toBe(1); // single leaf nibble
+  });
+
+  it('picks layerLo when majority of vertices are in lower layer', () => {
+    const layerHeight = 0.1;
+    const clusterLayerMaps = [new Uint8Array([1, 2, 1, 2, 1, 2])];
+    const faceClusterIndex = new Uint16Array([0]);
+    const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
+
+    const subdiv = makeSubdivider(layerHeight, 0.0, clusterLayerMaps, faceClusterIndex, 1, epsilon);
+    const nibbles: number[] = [];
+
+    // Z-span = 0.002, within tolerance (Z_TOLERANCE_FACTOR * layerHeight)
+    // v0 (z=0.499) → layer 4, v1 (z=0.501) → layer 5, v2 (z=0.4995) → layer 4
+    // Vertex majority: 2 in layer 4, 1 in layer 5 → assigns layer 4 (filament 1)
+    const result = subdiv(
+      0.499, 0.501, 0.4995,
+      [0, 0, 0.499], [0.01, 0, 0.501], [0.005, 0, 0.4995],
+      5, nibbles, 0,
+    );
+
+    expect(result).toBeGreaterThanOrEqual(0);
+    expect(result).toBe(1); // filament for layer 4
+    expect(nibbles.length).toBe(1);
+  });
+
+  it('does not recurse to max depth (performance guard)', () => {
+    const layerHeight = 0.1;
+    const clusterLayerMaps = [new Uint8Array([1, 2, 1, 2, 1, 2])];
+    const faceClusterIndex = new Uint16Array([0]);
+    const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
+
+    const subdiv = makeSubdivider(layerHeight, 0.0, clusterLayerMaps, faceClusterIndex, 1, epsilon);
+    const nibbles: number[] = [];
+
+    // Z-span 0.001 is within tolerance → vertex-majority in O(1)
+    subdiv(
+      0.4995, 0.5005, 0.500,
+      [0, 0, 0.4995], [0.01, 0, 0.5005], [0.005, 0, 0.500],
+      12, nibbles, 0,
+    );
+
+    // Should produce exactly 1 nibble (leaf), not a deep tree
+    expect(nibbles.length).toBe(1);
+  });
+
+  it('continues splitting when Z-span exceeds tolerance before applying vertex-majority', () => {
+    const layerHeight = 0.1;
+    // zTolerance = 0.1 * Z_TOLERANCE_FACTOR
+    const clusterLayerMaps = [new Uint8Array([1, 2, 1, 2, 1, 2])];
+    const faceClusterIndex = new Uint16Array([0]);
+    const epsilon = Math.max(layerHeight * LAYER_EPSILON_FACTOR, MIN_ABSOLUTE_EPSILON);
+
+    const subdiv = makeSubdivider(layerHeight, 0.0, clusterLayerMaps, faceClusterIndex, 1, epsilon);
+    const nibbles: number[] = [];
+
+    // Z-span = 0.06 > zTolerance, but all 3D edges < layerHeight (nLong === 0)
+    // 3D edge lengths: ~0.061, ~0.031, ~0.031 — all squared < limitSq (0.01)
+    const result = subdiv(
+      0.47, 0.53, 0.50,
+      [0, 0, 0.47], [0.01, 0, 0.53], [0.005, 0, 0.50],
+      8, nibbles, 0,
+    );
+
+    // Should split (not immediate leaf) since Z-span > tolerance
+    expect(result).toBe(-1);
+    expect(nibbles.length).toBeGreaterThan(1);
+    // But should NOT explode — bounded by a few levels before tolerance is met
+    expect(nibbles.length).toBeLessThan(200);
+  });
+});
+
 describe('epsilon floor', () => {
   it('epsilon is at least MIN_ABSOLUTE_EPSILON even for small layer heights', () => {
     const layerHeight = 0.04;
