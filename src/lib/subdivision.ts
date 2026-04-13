@@ -177,7 +177,7 @@ export function makeSubdivider(
         }
 
         if (nLong === 0 && (zHi - zLo) <= zTolerance) {
-            // All edges shorter than layerHeight and Z-span within 10% tolerance.
+            // All edges shorter than layerHeight and Z-span within the configured tolerance.
             // Use vertex-majority: the "middle" Z vertex determines the 2-vs-1 split.
             const zMid = z0 + z1 + z2 - zLo - zHi;
             const midF = (zMid - globalZMin + epsilon) * invLh;
